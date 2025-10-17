@@ -1,115 +1,188 @@
+import { useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
-import { PageContainer } from "@/components/layout/PageContainer";
 import { FloatingActionButton } from "@/components/layout/FloatingActionButton";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageContainer } from "@/components/layout/PageContainer";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, CheckSquare, Timer, Brain } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { TaskDialog } from "@/components/tasks/TaskDialog";
+import { MessageCircle, CheckCircle2, Timer, Plus, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   const { toast } = useToast();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  const handleQuickAction = () => {
-    toast({
-      title: "Quick Add",
-      description: "Create a new task or message",
-    });
+  // Mock data for dashboard
+  const stats = {
+    unreadMessages: 7,
+    pendingTasks: 3,
+    focusTime: 45, // minutes
+  };
+
+  const recentConversations = [
+    { id: "1", name: "Sarah Johnson", message: "Let's discuss the meeting", time: "10:33 AM" },
+    { id: "2", name: "Project Team", message: "Alex: Let's schedule a call", time: "Yesterday" },
+  ];
+
+  const todayTasks = [
+    { id: "1", title: "Review project proposal", priority: "high", isCompleted: false },
+    { id: "2", title: "Buy groceries", priority: "medium", isCompleted: false },
+    { id: "3", title: "Call dentist", priority: "high", isCompleted: false },
+  ];
+
+  const completedTasks = todayTasks.filter(t => t.isCompleted).length;
+  const totalTasks = todayTasks.length;
+  const completionPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
+  const handleSaveTask = (task: any) => {
+    toast({ title: "Task created", description: "New task added to your list." });
+    setDialogOpen(false);
   };
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
-      <PageContainer>
-        <div className="space-y-6 animate-fade-in">
-          {/* Welcome Section */}
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold">Welcome back!</h2>
-            <p className="text-muted-foreground">Here's your overview for today</p>
-          </div>
+      <PageContainer className="pb-24">
+        {/* Welcome Section */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-2">Welcome back!</h2>
+          <p className="text-muted-foreground">Here's your overview for today</p>
+        </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-3 gap-3">
-            <Card className="animate-scale-in">
-              <CardContent className="p-4 text-center">
-                <MessageCircle className="mx-auto h-6 w-6 text-primary mb-2" />
-                <p className="text-2xl font-bold">3</p>
-                <p className="text-xs text-muted-foreground">Unread</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="animate-scale-in" style={{ animationDelay: "0.1s" }}>
-              <CardContent className="p-4 text-center">
-                <CheckSquare className="mx-auto h-6 w-6 text-accent mb-2" />
-                <p className="text-2xl font-bold">5</p>
-                <p className="text-xs text-muted-foreground">Tasks</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="animate-scale-in" style={{ animationDelay: "0.2s" }}>
-              <CardContent className="p-4 text-center">
-                <Timer className="mx-auto h-6 w-6 text-warning mb-2" />
-                <p className="text-2xl font-bold">2h</p>
-                <p className="text-xs text-muted-foreground">Focus</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Recent Messages */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Recent Messages</CardTitle>
-              <CardDescription>Your latest conversations</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors cursor-pointer">
-                <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                  <span className="text-sm font-semibold text-primary">JD</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">John Doe</p>
-                  <p className="text-xs text-muted-foreground truncate">Let's meet tomorrow...</p>
-                </div>
-                <span className="text-xs text-muted-foreground">2m</span>
-              </div>
-            </CardContent>
+        {/* Quick Stats */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <Card className="p-4">
+            <div className="flex flex-col items-center text-center">
+              <MessageCircle className="h-5 w-5 text-primary mb-2" />
+              <p className="text-2xl font-bold">{stats.unreadMessages}</p>
+              <p className="text-xs text-muted-foreground">Unread</p>
+            </div>
           </Card>
-
-          {/* Today's Tasks */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Today's Tasks</CardTitle>
-              <CardDescription>Stay focused on what matters</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors cursor-pointer">
-                <div className="h-5 w-5 rounded border-2 border-primary" />
-                <p className="text-sm flex-1">Review project proposal</p>
-                <span className="text-xs bg-warning/20 text-warning px-2 py-1 rounded">High</span>
-              </div>
-            </CardContent>
+          
+          <Card className="p-4">
+            <div className="flex flex-col items-center text-center">
+              <CheckCircle2 className="h-5 w-5 text-accent mb-2" />
+              <p className="text-2xl font-bold">{stats.pendingTasks}</p>
+              <p className="text-xs text-muted-foreground">Tasks</p>
+            </div>
           </Card>
+          
+          <Card className="p-4">
+            <div className="flex flex-col items-center text-center">
+              <Timer className="h-5 w-5 text-warning mb-2" />
+              <p className="text-2xl font-bold">{stats.focusTime}m</p>
+              <p className="text-xs text-muted-foreground">Focus</p>
+            </div>
+          </Card>
+        </div>
 
-          {/* AI Assistant */}
-          <Card className="bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Brain className="h-5 w-5 text-primary" />
-                AI Assistant
-              </CardTitle>
-              <CardDescription>Get help staying organized</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" className="w-full">
-                Chat with AI
+        {/* Today's Progress */}
+        <Card className="p-4 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold">Today's Progress</h3>
+            <span className="text-sm text-muted-foreground">
+              {completedTasks}/{totalTasks} completed
+            </span>
+          </div>
+          <Progress value={completionPercentage} className="h-2 mb-2" />
+          <p className="text-xs text-muted-foreground">
+            {completionPercentage === 100 
+              ? "Amazing work! All tasks completed! 🎉"
+              : "Keep going! You're making progress."}
+          </p>
+        </Card>
+
+        {/* Recent Conversations */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold">Recent Conversations</h3>
+            <Link to="/messages">
+              <Button variant="ghost" size="sm">
+                View All <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
-            </CardContent>
-          </Card>
+            </Link>
+          </div>
+          
+          <div className="space-y-2">
+            {recentConversations.map((conv) => (
+              <Link key={conv.id} to={`/chat/${conv.id}`}>
+                <Card className="p-3 hover:bg-accent/50 transition-colors cursor-pointer">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm">{conv.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{conv.message}</p>
+                    </div>
+                    <span className="text-xs text-muted-foreground ml-2">{conv.time}</span>
+                  </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Today's Tasks */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold">Today's Priority Tasks</h3>
+            <Link to="/tasks">
+              <Button variant="ghost" size="sm">
+                View All <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </Link>
+          </div>
+          
+          <div className="space-y-2">
+            {todayTasks.map((task) => (
+              <Card key={task.id} className="p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{task.title}</p>
+                  </div>
+                  <Badge
+                    variant={task.priority === "high" ? "destructive" : "secondary"}
+                    className="text-xs"
+                  >
+                    {task.priority}
+                  </Badge>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 gap-3">
+          <Link to="/focus">
+            <Button variant="outline" className="w-full h-20 flex-col gap-2">
+              <Timer className="h-5 w-5" />
+              <span className="text-sm">Start Focus</span>
+            </Button>
+          </Link>
+          
+          <Link to="/messages">
+            <Button variant="outline" className="w-full h-20 flex-col gap-2">
+              <MessageCircle className="h-5 w-5" />
+              <span className="text-sm">New Message</span>
+            </Button>
+          </Link>
         </div>
       </PageContainer>
 
-      <FloatingActionButton onClick={handleQuickAction} />
+      <FloatingActionButton 
+        onClick={() => setDialogOpen(true)} 
+        icon={<Plus className="h-6 w-6" />}
+      />
+
+      <TaskDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSave={handleSaveTask}
+      />
+
       <BottomNavigation />
     </div>
   );
