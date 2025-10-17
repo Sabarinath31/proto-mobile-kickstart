@@ -12,6 +12,8 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import NotificationSettings from "./pages/NotificationSettings";
 import Messages from "./pages/Messages";
+import Chat from "./pages/Chat";
+import GroupInfo from "./pages/GroupInfo";
 import Tasks from "./pages/Tasks";
 import Focus from "./pages/Focus";
 import NotFound from "./pages/NotFound";
@@ -29,9 +31,11 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-            <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
-            <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
-            <Route path="/focus" element={<ProtectedRoute><Focus /></ProtectedRoute>} />
+          <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+          <Route path="/chat/:chatId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+          <Route path="/group/:groupId/info" element={<ProtectedRoute><GroupInfo /></ProtectedRoute>} />
+          <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+          <Route path="/focus" element={<ProtectedRoute><Focus /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/settings/notifications" element={<ProtectedRoute><NotificationSettings /></ProtectedRoute>} />
