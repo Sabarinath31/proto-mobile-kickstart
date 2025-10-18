@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Header } from "@/components/layout/Header";
@@ -8,13 +8,36 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Bell, LogOut, ChevronRight } from "lucide-react";
+import { Settings, Bell, LogOut, ChevronRight, Edit } from "lucide-react";
+import { profileService, Profile as ProfileType } from "@/services/profileService";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [profile, setProfile] = useState<ProfileType | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      loadProfile();
+    }
+  }, [user]);
+
+  const loadProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const data = await profileService.getProfile(user.id);
+      setProfile(data);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error loading profile",
+        description: error.message,
+      });
+    }
+  };
 
   const handleSignOut = async () => {
     setLoading(true);
@@ -49,19 +72,33 @@ const Profile = () => {
           {/* Profile Card */}
           <Card>
             <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col items-center gap-4">
                 <Avatar className="h-20 w-20">
-                  <AvatarImage src="" alt="User" />
+                  <AvatarImage src={profile?.avatar_url || ""} alt="User" />
                   <AvatarFallback className="bg-primary text-primary-foreground text-xl">
                     {user?.email ? getInitials(user.email) : "U"}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold">{user?.email}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Member since {new Date(user?.created_at || "").toLocaleDateString()}
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold">
+                    {profile?.display_name || user?.email}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  {profile?.bio && (
+                    <p className="mt-2 text-sm text-muted-foreground">{profile.bio}</p>
+                  )}
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : new Date().toLocaleDateString()}
                   </p>
                 </div>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => navigate("/profile/edit")}
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Profile
+                </Button>
               </div>
             </CardContent>
           </Card>
