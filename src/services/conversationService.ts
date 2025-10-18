@@ -1,0 +1,139 @@
+import { supabase } from "@/integrations/supabase/client";
+
+export interface Conversation {
+  id: string;
+  name: string | null;
+  is_group: boolean;
+  avatar_url: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserConversation {
+  id: string;
+  user_id: string;
+  conversation_id: string;
+  is_pinned: boolean;
+  last_read_at: string | null;
+  joined_at: string;
+}
+
+export const conversationService = {
+  async getUserConversations(userId: string) {
+    const { data, error } = await supabase
+      .from("user_conversations")
+      .select(`
+        *,
+        conversation:conversations(*)
+      `)
+      .eq("user_id", userId)
+      .order("joined_at", { ascending: false });
+
+    if (error) throw error;
+    return data;
+  },
+
+  async getConversation(conversationId: string) {
+    const { data, error } = await supabase
+      .from("conversations")
+      .select("*")
+      .eq("id", conversationId)
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async createConversation(
+    name: string | null,
+    isGroup: boolean,
+    participantIds: string[]
+  ) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { data: conversation, error: convError } = await supabase
+      .from("conversations")
+      .insert({
+        name,
+        is_group: isGroup,
+        created_by: user.id,
+      })
+      .select()
+      .single();
+
+    if (convError) throw convError;
+
+    const userConversations = participantIds.map((userId) => ({
+      user_id: userId,
+      conversation_id: conversation.id,
+    }));
+
+    const { error: ucError } = await supabase
+      .from("user_conversations")
+      .insert(userConversations);
+
+    if (ucError) throw ucError;
+
+    return conversation;
+  },
+
+  async updateConversation(conversationId: string, updates: Partial<Conversation>) {
+    const { data, error } = await supabase
+      .from("conversations")
+      .update(updates)
+      .eq("id", conversationId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async pinConversation(conversationId: string, isPinned: boolean) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { data, error } = await supabase
+      .from("user_conversations")
+      .update({ is_pinned: isPinned })
+      .eq("conversation_id", conversationId)
+      .eq("user_id", user.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async markAsRead(conversationId: string) {
+    const { error } = await supabase.rpc("mark_messages_as_read", {
+      p_conversation_id: conversationId,
+    });
+
+    if (error) throw error;
+  },
+
+  async getUnreadCount(conversationId: string) {
+    const { data, error } = await supabase.rpc("get_unread_count", {
+      p_conversation_id: conversationId,
+    });
+
+    if (error) throw error;
+    return data as number;
+  },
+
+  async leaveConversation(conversationId: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { error } = await supabase
+      .from("user_conversations")
+      .delete()
+      .eq("conversation_id", conversationId)
+      .eq("user_id", user.id);
+
+    if (error) throw error;
+  },
+};
