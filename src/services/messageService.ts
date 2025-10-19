@@ -130,4 +130,45 @@ export const messageService = {
       )
       .subscribe();
   },
+
+  async searchMessages(query: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { data, error } = await supabase.rpc("search_messages", {
+      search_query: query,
+      user_id_param: user.id,
+    });
+
+    if (error) throw error;
+    return data;
+  },
+
+  async convertToTask(messageId: string, conversationId: string) {
+    const { data: message, error: msgError } = await supabase
+      .from("messages")
+      .select("content")
+      .eq("id", messageId)
+      .single();
+
+    if (msgError) throw msgError;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { data: task, error: taskError } = await supabase
+      .from("tasks")
+      .insert({
+        user_id: user.id,
+        title: message.content?.substring(0, 100) || "New task from message",
+        description: message.content,
+        created_from_message_id: messageId,
+        priority: "medium",
+      })
+      .select()
+      .single();
+
+    if (taskError) throw taskError;
+    return task;
+  },
 };

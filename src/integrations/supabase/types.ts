@@ -327,6 +327,38 @@ export type Database = {
         Args: { p_conversation_id: string }
         Returns: undefined
       }
+      search_messages: {
+        Args: { search_query: string; user_id_param: string }
+        Returns: {
+          content: string
+          conversation_id: string
+          created_at: string
+          file_name: string
+          file_url: string
+          id: string
+          message_type: string
+          rank: number
+          sender_id: string
+          voice_duration: number
+        }[]
+      }
+      search_tasks: {
+        Args: { search_query: string; user_id_param: string }
+        Returns: {
+          category_id: string
+          completed_at: string
+          created_at: string
+          created_from_message_id: string
+          description: string
+          due_date: string
+          id: string
+          is_completed: boolean
+          priority: string
+          rank: number
+          title: string
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

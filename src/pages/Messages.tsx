@@ -1,62 +1,152 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/Header";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { ChatListItem } from "@/components/messages/ChatListItem";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search } from "lucide-react";
+import { conversationService } from "@/services/conversationService";
+import { messageService } from "@/services/messageService";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-// Mock data
-const mockChats = [
-  {
-    id: "1",
-    name: "Sarah Johnson",
-    avatar: "",
-    lastMessage: "That's great! I wanted to discuss the upcoming meeting.",
-    timestamp: "10:33 AM",
-    unreadCount: 2,
-    isPinned: true,
-    isGroup: false,
-  },
-  {
-    id: "2",
-    name: "Project Team",
-    avatar: "",
-    lastMessage: "Alex: Let's schedule a call for tomorrow",
-    timestamp: "Yesterday",
-    unreadCount: 5,
-    isPinned: false,
-    isGroup: true,
-  },
-  {
-    id: "3",
-    name: "Mike Chen",
-    avatar: "",
-    lastMessage: "Thanks for your help!",
-    timestamp: "2 days ago",
-    unreadCount: 0,
-    isPinned: false,
-    isGroup: false,
-  },
-];
+interface ChatWithDetails {
+  id: string;
+  name: string;
+  avatar: string;
+  lastMessage: string;
+  timestamp: string;
+  unreadCount: number;
+  isPinned: boolean;
+  isGroup: boolean;
+}
 
 const Messages = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [chats, setChats] = useState<ChatWithDetails[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const filteredChats = mockChats.filter((chat) => {
-    const matchesSearch = chat.name.toLowerCase().includes(searchQuery.toLowerCase());
-    
+  useEffect(() => {
+    loadConversations();
+    subscribeToConversations();
+  }, []);
+
+  const loadConversations = async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const userConvs = await conversationService.getUserConversations(user.id);
+      
+      const chatsData = await Promise.all(
+        userConvs.map(async (uc: any) => {
+          const conv = uc.conversation;
+          const messages = await messageService.getMessages(conv.id, 1);
+          const unreadCount = await conversationService.getUnreadCount(conv.id);
+
+          return {
+            id: conv.id,
+            name: conv.name || "Unknown",
+            avatar: conv.avatar_url || "",
+            lastMessage: messages[0]?.content || "No messages yet",
+            timestamp: messages[0] 
+              ? new Date(messages[0].created_at).toLocaleDateString()
+              : "",
+            unreadCount: unreadCount,
+            isPinned: uc.is_pinned,
+            isGroup: conv.is_group,
+          };
+        })
+      );
+
+      setChats(chatsData);
+    } catch (error) {
+      console.error("Error loading conversations:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load conversations",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const subscribeToConversations = () => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+
+      const channel = conversationService.subscribeToConversations(user.id, () => {
+        loadConversations();
+      });
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    });
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      loadConversations();
+      return;
+    }
+
+    try {
+      const results = await messageService.searchMessages(searchQuery);
+      // Group results by conversation
+      const conversationIds = [...new Set(results.map((r: any) => r.conversation_id))];
+      
+      const searchChats = await Promise.all(
+        conversationIds.map(async (convId: string) => {
+          const conv = await conversationService.getConversation(convId);
+          const relevantMsg = results.find((r: any) => r.conversation_id === convId);
+          
+          return {
+            id: conv.id,
+            name: conv.name || "Unknown",
+            avatar: conv.avatar_url || "",
+            lastMessage: relevantMsg?.content || "",
+            timestamp: new Date(relevantMsg?.created_at).toLocaleDateString(),
+            unreadCount: 0,
+            isPinned: false,
+            isGroup: conv.is_group,
+          };
+        })
+      );
+
+      setChats(searchChats);
+    } catch (error) {
+      console.error("Error searching:", error);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery) {
+        handleSearch();
+      } else {
+        loadConversations();
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const filteredChats = chats.filter((chat) => {
     switch (activeTab) {
       case "unread":
-        return matchesSearch && chat.unreadCount > 0;
+        return chat.unreadCount > 0;
       case "pinned":
-        return matchesSearch && chat.isPinned;
+        return chat.isPinned;
       case "groups":
-        return matchesSearch && chat.isGroup;
+        return chat.isGroup;
       default:
-        return matchesSearch;
+        return true;
     }
   });
 
@@ -88,7 +178,11 @@ const Messages = () => {
 
         {/* Chat List */}
         <div className="space-y-2">
-          {filteredChats.length > 0 ? (
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <p className="text-muted-foreground">Loading conversations...</p>
+            </div>
+          ) : filteredChats.length > 0 ? (
             filteredChats.map((chat) => (
               <ChatListItem
                 key={chat.id}

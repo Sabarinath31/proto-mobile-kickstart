@@ -189,7 +189,7 @@ export const taskService = {
     if (error) throw error;
   },
 
-  subscribeToTasks(userId: string, callback: (task: Task) => void) {
+  subscribeToTasks(userId: string, callback: (payload: any) => void) {
     return supabase
       .channel(`tasks:${userId}`)
       .on(
@@ -200,8 +200,54 @@ export const taskService = {
           table: "tasks",
           filter: `user_id=eq.${userId}`,
         },
-        (payload) => callback(payload.new as Task)
+        (payload) => callback(payload)
       )
       .subscribe();
+  },
+
+  async searchTasks(query: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { data, error } = await supabase.rpc("search_tasks", {
+      search_query: query,
+      user_id_param: user.id,
+    });
+
+    if (error) throw error;
+    return data;
+  },
+
+  async exportTasks() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { data, error } = await supabase
+      .from("tasks")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    
+    const csv = [
+      ["Title", "Description", "Status", "Priority", "Due Date", "Created At"],
+      ...data.map(task => [
+        task.title,
+        task.description || "",
+        task.is_completed ? "Completed" : "Pending",
+        task.priority,
+        task.due_date || "",
+        task.created_at,
+      ])
+    ].map(row => row.join(",")).join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tasks-${new Date().toISOString()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   },
 };

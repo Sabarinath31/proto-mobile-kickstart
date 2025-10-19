@@ -8,64 +8,77 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, MoreVertical, Phone, Video, ArrowDown, CheckSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-// Mock data
-const mockChats = {
-  "1": {
-    name: "Sarah Johnson",
-    avatar: "",
-    isOnline: true,
-    isGroup: false,
-  },
-  "2": {
-    name: "Project Team",
-    avatar: "",
-    isOnline: false,
-    isGroup: true,
-  },
-};
-
-const mockMessages = [
-  {
-    id: "1",
-    content: "Hey! How are you doing?",
-    timestamp: "10:30 AM",
-    isSent: false,
-    senderName: "Sarah Johnson",
-  },
-  {
-    id: "2",
-    content: "I'm good! Just working on the new project. How about you?",
-    timestamp: "10:32 AM",
-    isSent: true,
-    isRead: true,
-  },
-  {
-    id: "3",
-    content: "That's great! I wanted to discuss the upcoming meeting.",
-    timestamp: "10:33 AM",
-    isSent: false,
-    senderName: "Sarah Johnson",
-  },
-  {
-    id: "4",
-    content: "Sure! What time works for you?",
-    timestamp: "10:35 AM",
-    isSent: true,
-    isDelivered: true,
-  },
-];
+import { messageService, Message } from "@/services/messageService";
+import { conversationService } from "@/services/conversationService";
+import { supabase } from "@/integrations/supabase/client";
 
 const Chat = () => {
   const { chatId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [messages, setMessages] = useState(mockMessages);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [conversation, setConversation] = useState<any>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const chat = mockChats[chatId as keyof typeof mockChats];
+  useEffect(() => {
+    loadChat();
+    subscribeToMessages();
+    getCurrentUser();
+
+    return () => {
+      // Cleanup subscriptions
+    };
+  }, [chatId]);
+
+  const getCurrentUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) setCurrentUserId(user.id);
+  };
+
+  const loadChat = async () => {
+    if (!chatId) return;
+
+    try {
+      setLoading(true);
+      const conv = await conversationService.getConversation(chatId);
+      setConversation(conv);
+
+      const msgs = await messageService.getMessages(chatId);
+      setMessages(msgs.reverse() as Message[]);
+      
+      await conversationService.markAsRead(chatId);
+    } catch (error) {
+      console.error("Error loading chat:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load conversation",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const subscribeToMessages = () => {
+    if (!chatId) return;
+
+    const channel = messageService.subscribeToMessages(chatId, (newMessage) => {
+      setMessages((prev) => [...prev, newMessage]);
+      scrollToBottom();
+      
+      if (newMessage.sender_id !== currentUserId) {
+        conversationService.markAsRead(chatId);
+      }
+    });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
 
   useEffect(() => {
     scrollToBottom();
@@ -83,40 +96,98 @@ const Chat = () => {
     setShowScrollButton(!isNearBottom);
   };
 
-  const handleSendMessage = (content: string) => {
-    const newMessage = {
-      id: Date.now().toString(),
-      content,
-      timestamp: new Date().toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-      }),
-      isSent: true,
-      isDelivered: false,
-    };
-    setMessages([...messages, newMessage]);
+  const handleSendMessage = async (content: string) => {
+    if (!chatId) return;
+
+    try {
+      await messageService.sendMessage(chatId, content);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send message",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleVoiceRecord = () => {
     setIsRecording(true);
   };
 
-  const handleSendVoice = (audioBlob: Blob) => {
-    setIsRecording(false);
-    toast({
-      title: "Voice message sent",
-      description: "Your voice message has been sent successfully.",
-    });
+  const handleSendVoice = async (audioBlob: Blob) => {
+    if (!chatId) return;
+
+    try {
+      setIsRecording(false);
+      const voiceUrl = await messageService.uploadVoiceMessage(chatId, audioBlob);
+      await messageService.sendMessage(chatId, null, "voice", voiceUrl, undefined, Math.floor(audioBlob.size / 1000));
+      
+      toast({
+        title: "Voice message sent",
+        description: "Your voice message has been sent successfully.",
+      });
+    } catch (error) {
+      console.error("Error sending voice message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send voice message",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleConvertToTask = () => {
-    toast({
-      title: "Task created",
-      description: "Message converted to task successfully.",
-    });
+  const handleConvertToTask = async () => {
+    if (!chatId || messages.length === 0) return;
+
+    try {
+      const lastMessage = messages[messages.length - 1];
+      await messageService.convertToTask(lastMessage.id, chatId);
+      
+      toast({
+        title: "Task created",
+        description: "Message converted to task successfully.",
+      });
+    } catch (error) {
+      console.error("Error converting to task:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create task from message",
+        variant: "destructive",
+      });
+    }
   };
 
-  if (!chat) {
+  const handleAttachment = async (file: File) => {
+    if (!chatId) return;
+
+    try {
+      const fileUrl = await messageService.uploadAttachment(chatId, file);
+      await messageService.sendMessage(chatId, null, "file", fileUrl, file.name);
+      
+      toast({
+        title: "File sent",
+        description: "Your file has been sent successfully.",
+      });
+    } catch (error) {
+      console.error("Error sending attachment:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send file",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!conversation) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-muted-foreground">Chat not found</p>
@@ -124,12 +195,12 @@ const Chat = () => {
     );
   }
 
-  const initials = chat.name
-    .split(" ")
-    .map((n) => n[0])
+  const initials = conversation.name
+    ?.split(" ")
+    .map((n: string) => n[0])
     .join("")
     .toUpperCase()
-    .slice(0, 2);
+    .slice(0, 2) || "??";
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -146,16 +217,16 @@ const Chat = () => {
             </Button>
             
             <Avatar className="h-10 w-10">
-              <AvatarImage src={chat.avatar} alt={chat.name} />
+              <AvatarImage src={conversation.avatar_url || ""} alt={conversation.name || ""} />
               <AvatarFallback className="bg-primary text-primary-foreground">
                 {initials}
               </AvatarFallback>
             </Avatar>
 
             <div>
-              <h1 className="font-semibold text-sm">{chat.name}</h1>
+              <h1 className="font-semibold text-sm">{conversation.name || "Unknown"}</h1>
               <p className="text-xs text-muted-foreground">
-                {chat.isOnline ? "Online" : "Offline"}
+                {conversation.is_group ? "Group Chat" : "Direct Message"}
               </p>
             </div>
           </div>
@@ -188,13 +259,16 @@ const Chat = () => {
             {messages.map((message) => (
               <MessageBubble
                 key={message.id}
-                content={message.content}
-                timestamp={message.timestamp}
-                isSent={message.isSent}
-                isRead={message.isSent && "isRead" in message ? message.isRead : false}
-                isDelivered={message.isSent && "isDelivered" in message ? message.isDelivered : false}
-                senderName={message.senderName}
-                isGroup={chat.isGroup}
+                content={message.content || ""}
+                timestamp={new Date(message.created_at).toLocaleTimeString("en-US", {
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
+                isSent={message.sender_id === currentUserId}
+                isRead={true}
+                isDelivered={true}
+                senderName={message.sender_id}
+                isGroup={conversation.is_group}
               />
             ))}
           </div>
@@ -222,7 +296,15 @@ const Chat = () => {
           <MessageInput
             onSendMessage={handleSendMessage}
             onVoiceRecord={handleVoiceRecord}
-            onAttachment={() => toast({ title: "Attachment feature coming soon" })}
+            onAttachment={() => {
+              const input = document.createElement("input");
+              input.type = "file";
+              input.onchange = (e) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (file) handleAttachment(file);
+              };
+              input.click();
+            }}
           />
         )}
       </div>

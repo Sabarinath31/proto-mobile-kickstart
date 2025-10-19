@@ -136,4 +136,20 @@ export const conversationService = {
 
     if (error) throw error;
   },
+
+  subscribeToConversations(userId: string, callback: (payload: any) => void) {
+    return supabase
+      .channel(`user_conversations:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "user_conversations",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => callback(payload)
+      )
+      .subscribe();
+  },
 };
