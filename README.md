@@ -1,73 +1,178 @@
-# Welcome to your Lovable project
+# WhatsMind - ADHD-Friendly Messaging & Task Manager
 
-## Project info
+WhatsMind is a Progressive Web App that combines messaging and task management to help individuals with ADHD stay organized without distraction.
 
-**URL**: https://lovable.dev/projects/6e2ea119-8adf-4e86-bfca-4b76f42bbabd
+## 🌟 Features
 
-## How can I edit this code?
+- **ADHD-Optimized Messaging**: Clean, distraction-free chat interface with smart categorization
+- **Smart Task Management**: Convert messages to tasks with visual prioritization and due dates
+- **Focus Timer**: Built-in Pomodoro timer for maintaining concentration during work sessions
+- **AI Assistant**: Lovable AI-powered productivity advice and task assistance
+- **Real-time Sync**: Instant updates across all devices with Supabase real-time
+- **Voice Messages**: Record and send voice messages for quick communication
+- **File Sharing**: Secure file attachments with organized storage
+- **PWA Support**: Install as native app on any device with offline capabilities
 
-There are several ways of editing your application.
+## 🛠️ Tech Stack
 
-**Use Lovable**
+- **Frontend**: React 18, TypeScript, Tailwind CSS, Vite
+- **Backend**: Supabase (Auth, Database, Storage, Real-time, Edge Functions)
+- **AI**: Lovable AI (Google Gemini 2.5 Flash)
+- **PWA**: Vite PWA Plugin with Workbox for offline support
+- **UI Components**: shadcn/ui with Radix UI primitives
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/6e2ea119-8adf-4e86-bfca-4b76f42bbabd) and start prompting.
+## 🚀 Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js 18+ or Bun
+- Supabase account
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+1. Clone the repository:
+```bash
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+cd whatsmind
 ```
 
-**Edit a file directly in GitHub**
+2. Install dependencies:
+```bash
+npm install
+# or
+bun install
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+3. Set up environment variables:
+Create a `.env` file with your Supabase credentials:
+```
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-**Use GitHub Codespaces**
+4. Run database migrations:
+All migrations are automatically applied when you build the project.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+5. Start the development server:
+```bash
+npm run dev
+# or
+bun dev
+```
 
-## What technologies are used for this project?
+6. Open [http://localhost:8080](http://localhost:8080) in your browser
 
-This project is built with:
+## 📱 PWA Installation
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+WhatsMind can be installed as a native app on any device:
 
-## How can I deploy this project?
+1. Visit the app in your browser
+2. Look for the install prompt or visit `/install`
+3. Click "Install" to add to your home screen
+4. Enjoy offline access and native app experience
 
-Simply open [Lovable](https://lovable.dev/projects/6e2ea119-8adf-4e86-bfca-4b76f42bbabd) and click on Share -> Publish.
+## 🗄️ Database Schema
 
-## Can I connect a custom domain to my Lovable project?
+The app uses the following main tables:
+- **profiles**: User profile information and preferences
+- **conversations**: Chat conversations (individual and group)
+- **messages**: Chat messages with support for text, voice, and files
+- **tasks**: User tasks with priorities, categories, and due dates
+- **focus_sessions**: Focus timer session tracking
+- **categories**: Custom task categories
+- **notifications**: System notifications
 
-Yes, you can!
+All tables have Row Level Security (RLS) policies for data protection.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🔒 Security
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- **Authentication**: Supabase Auth with email/password and social login
+- **Row Level Security**: All tables protected with RLS policies
+- **Secure Storage**: File uploads with access control policies
+- **API Security**: Edge functions with JWT verification
+- **Input Validation**: Client and server-side validation
+- **XSS Protection**: Sanitized user inputs
+
+## ⚡ Performance Optimizations
+
+- **Code Splitting**: React.lazy for route-based code splitting
+- **PWA Caching**: Service worker with Workbox for offline support
+- **Database Indexes**: Optimized queries for fast data access
+- **Real-time Subscriptions**: Efficient WebSocket connections
+- **Image Optimization**: Optimized assets and lazy loading
+- **Bundle Size**: Tree-shaking and minimized production builds
+
+## 🎨 Design System
+
+WhatsMind uses a carefully crafted ADHD-friendly design system:
+- **Calming Colors**: Soft blues, greens, and warm accents
+- **Generous Spacing**: 8px grid system for visual clarity
+- **Subtle Animations**: Smooth transitions without distraction
+- **High Contrast**: Accessible color ratios for readability
+- **Consistent Typography**: Inter font family for clarity
+
+## 📖 Project Structure
+
+```
+whatsmind/
+├── src/
+│   ├── components/       # Reusable UI components
+│   ├── contexts/         # React contexts (Auth, etc.)
+│   ├── hooks/           # Custom React hooks
+│   ├── pages/           # Page components
+│   ├── services/        # API service layers
+│   ├── utils/           # Utility functions
+│   └── integrations/    # Supabase integration
+├── supabase/
+│   ├── functions/       # Edge functions
+│   └── migrations/      # Database migrations
+└── public/              # Static assets
+
+```
+
+## 🧪 Testing
+
+Run linting and type checks:
+```bash
+npm run lint
+npm run type-check
+```
+
+## 📦 Deployment
+
+### Deploy via Lovable
+
+The easiest way to deploy is through Lovable:
+
+1. Click the **Publish** button in the Lovable editor
+2. Your app will be deployed to `yoursite.lovable.app`
+3. Connect a custom domain in Project Settings if desired
+
+### Deploy Elsewhere
+
+Build the production bundle:
+```bash
+npm run build
+# or
+bun run build
+```
+
+The `dist` folder contains the production-ready app that can be deployed to:
+- Vercel
+- Netlify  
+- AWS Amplify
+- Any static hosting service
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+MIT License - see LICENSE file for details
+
+---
+
+**Project URL**: https://lovable.dev/projects/6e2ea119-8adf-4e86-bfca-4b76f42bbabd
+
+Built with ❤️ using [Lovable](https://lovable.dev)
