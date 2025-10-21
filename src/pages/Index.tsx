@@ -55,29 +55,35 @@ const Index = () => {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <Card className="p-4">
-            <div className="flex flex-col items-center text-center">
-              <MessageCircle className="h-5 w-5 text-primary mb-2" />
-              <p className="text-2xl font-bold">{stats.unreadMessages}</p>
-              <p className="text-xs text-muted-foreground">Unread</p>
-            </div>
-          </Card>
+          <Link to="/messages">
+            <Card className="p-4 cursor-pointer hover:bg-accent/50 transition-colors">
+              <div className="flex flex-col items-center text-center">
+                <MessageCircle className="h-5 w-5 text-primary mb-2" />
+                <p className="text-2xl font-bold">{stats.unreadMessages}</p>
+                <p className="text-xs text-muted-foreground">Unread</p>
+              </div>
+            </Card>
+          </Link>
           
-          <Card className="p-4">
-            <div className="flex flex-col items-center text-center">
-              <CheckCircle2 className="h-5 w-5 text-accent mb-2" />
-              <p className="text-2xl font-bold">{stats.pendingTasks}</p>
-              <p className="text-xs text-muted-foreground">Tasks</p>
-            </div>
-          </Card>
+          <Link to="/tasks">
+            <Card className="p-4 cursor-pointer hover:bg-accent/50 transition-colors">
+              <div className="flex flex-col items-center text-center">
+                <CheckCircle2 className="h-5 w-5 text-accent mb-2" />
+                <p className="text-2xl font-bold">{stats.pendingTasks}</p>
+                <p className="text-xs text-muted-foreground">Tasks</p>
+              </div>
+            </Card>
+          </Link>
           
-          <Card className="p-4">
-            <div className="flex flex-col items-center text-center">
-              <Timer className="h-5 w-5 text-warning mb-2" />
-              <p className="text-2xl font-bold">{stats.focusTime}m</p>
-              <p className="text-xs text-muted-foreground">Focus</p>
-            </div>
-          </Card>
+          <Link to="/focus">
+            <Card className="p-4 cursor-pointer hover:bg-accent/50 transition-colors">
+              <div className="flex flex-col items-center text-center">
+                <Timer className="h-5 w-5 text-warning mb-2" />
+                <p className="text-2xl font-bold">{stats.focusTime}m</p>
+                <p className="text-xs text-muted-foreground">Focus</p>
+              </div>
+            </Card>
+          </Link>
         </div>
 
         {/* Today's Progress */}
