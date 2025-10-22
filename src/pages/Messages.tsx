@@ -5,11 +5,14 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { ChatListItem } from "@/components/messages/ChatListItem";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Search, MessageSquarePlus } from "lucide-react";
 import { conversationService } from "@/services/conversationService";
 import { messageService } from "@/services/messageService";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { FloatingActionButton } from "@/components/layout/FloatingActionButton";
+import { NewChatDialog } from "@/components/messages/NewChatDialog";
 
 interface ChatWithDetails {
   id: string;
@@ -20,13 +23,16 @@ interface ChatWithDetails {
   unreadCount: number;
   isPinned: boolean;
   isGroup: boolean;
+  category?: string;
 }
 
 const Messages = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [chats, setChats] = useState<ChatWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -59,6 +65,7 @@ const Messages = () => {
             unreadCount: unreadCount,
             isPinned: uc.is_pinned,
             isGroup: conv.is_group,
+            category: conv.category || "other",
           };
         })
       );
@@ -138,16 +145,24 @@ const Messages = () => {
   }, [searchQuery]);
 
   const filteredChats = chats.filter((chat) => {
+    // Filter by tab
+    let tabMatch = true;
     switch (activeTab) {
       case "unread":
-        return chat.unreadCount > 0;
+        tabMatch = chat.unreadCount > 0;
+        break;
       case "pinned":
-        return chat.isPinned;
+        tabMatch = chat.isPinned;
+        break;
       case "groups":
-        return chat.isGroup;
-      default:
-        return true;
+        tabMatch = chat.isGroup;
+        break;
     }
+
+    // Filter by category
+    const categoryMatch = categoryFilter === "all" || chat.category === categoryFilter;
+
+    return tabMatch && categoryMatch;
   });
 
   return (
@@ -175,6 +190,45 @@ const Messages = () => {
             <TabsTrigger value="groups">Groups</TabsTrigger>
           </TabsList>
         </Tabs>
+
+        {/* Category Filters */}
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+          <Badge
+            variant={categoryFilter === "all" ? "default" : "outline"}
+            className="cursor-pointer whitespace-nowrap"
+            onClick={() => setCategoryFilter("all")}
+          >
+            All
+          </Badge>
+          <Badge
+            variant={categoryFilter === "family" ? "default" : "outline"}
+            className="cursor-pointer whitespace-nowrap"
+            onClick={() => setCategoryFilter("family")}
+          >
+            Family
+          </Badge>
+          <Badge
+            variant={categoryFilter === "friends" ? "default" : "outline"}
+            className="cursor-pointer whitespace-nowrap"
+            onClick={() => setCategoryFilter("friends")}
+          >
+            Friends
+          </Badge>
+          <Badge
+            variant={categoryFilter === "work" ? "default" : "outline"}
+            className="cursor-pointer whitespace-nowrap"
+            onClick={() => setCategoryFilter("work")}
+          >
+            Work
+          </Badge>
+          <Badge
+            variant={categoryFilter === "other" ? "default" : "outline"}
+            className="cursor-pointer whitespace-nowrap"
+            onClick={() => setCategoryFilter("other")}
+          >
+            Other
+          </Badge>
+        </div>
 
         {/* Chat List */}
         <div className="space-y-2">
@@ -208,6 +262,14 @@ const Messages = () => {
           )}
         </div>
       </PageContainer>
+      <FloatingActionButton
+        onClick={() => setShowNewChatDialog(true)}
+        icon={<MessageSquarePlus className="h-6 w-6" />}
+      />
+      <NewChatDialog
+        open={showNewChatDialog}
+        onOpenChange={setShowNewChatDialog}
+      />
       <BottomNavigation />
     </div>
   );

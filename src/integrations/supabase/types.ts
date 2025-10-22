@@ -41,6 +41,7 @@ export type Database = {
       conversations: {
         Row: {
           avatar_url: string | null
+          category: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -50,6 +51,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          category?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -59,6 +61,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          category?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -319,10 +322,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_unread_count: {
-        Args: { p_conversation_id: string }
-        Returns: number
-      }
+      get_unread_count: { Args: { p_conversation_id: string }; Returns: number }
       mark_messages_as_read: {
         Args: { p_conversation_id: string }
         Returns: undefined
