@@ -38,7 +38,25 @@ const Messages = () => {
   useEffect(() => {
     loadConversations();
     subscribeToConversations();
+    checkAndCreateSampleChats();
   }, []);
+
+  const checkAndCreateSampleChats = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const userConvs = await conversationService.getUserConversations(user.id);
+      
+      // Only create sample chats if user has no conversations
+      if (userConvs.length === 0) {
+        await conversationService.createSampleChats();
+        loadConversations();
+      }
+    } catch (error) {
+      console.error("Error creating sample chats:", error);
+    }
+  };
 
   const loadConversations = async () => {
     try {

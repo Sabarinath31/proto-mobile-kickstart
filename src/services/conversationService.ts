@@ -49,7 +49,8 @@ export const conversationService = {
   async createConversation(
     name: string | null,
     isGroup: boolean,
-    participantIds: string[]
+    participantIds: string[],
+    category: string = 'other'
   ) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
@@ -60,6 +61,7 @@ export const conversationService = {
         name,
         is_group: isGroup,
         created_by: user.id,
+        category,
       })
       .select()
       .single();
@@ -78,6 +80,17 @@ export const conversationService = {
     if (ucError) throw ucError;
 
     return conversation;
+  },
+
+  async createSampleChats() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { error } = await supabase.rpc("create_sample_chats", {
+      p_user_id: user.id,
+    });
+
+    if (error) throw error;
   },
 
   async updateConversation(conversationId: string, updates: Partial<Conversation>) {

@@ -53,13 +53,9 @@ export const NewChatDialog = ({ open, onOpenChange }: NewChatDialogProps) => {
       const conversation = await conversationService.createConversation(
         name,
         false,
-        [user.id]
+        [user.id],
+        category
       );
-
-      // Update conversation with category
-      await conversationService.updateConversation(conversation.id, {
-        category,
-      });
 
       toast({
         title: "Success",

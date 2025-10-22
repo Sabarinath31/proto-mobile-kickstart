@@ -322,6 +322,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_sample_chats: { Args: { p_user_id: string }; Returns: undefined }
       get_unread_count: { Args: { p_conversation_id: string }; Returns: number }
       mark_messages_as_read: {
         Args: { p_conversation_id: string }
