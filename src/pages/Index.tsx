@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/Header";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { FloatingActionButton } from "@/components/layout/FloatingActionButton";
@@ -11,22 +11,63 @@ import { TaskDialog } from "@/components/tasks/TaskDialog";
 import { MessageCircle, CheckCircle2, Timer, Plus, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { conversationService } from "@/services/conversationService";
+import { messageService } from "@/services/messageService";
+import { format } from "date-fns";
 
 const Index = () => {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [totalUnreadCount, setTotalUnreadCount] = useState(0);
 
-  // Mock data for dashboard
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const userConvs = await conversationService.getUserConversations(user.id);
+      
+      const conversationsWithDetails = await Promise.all(
+        userConvs.map(async (uc: any) => {
+          const messages = await messageService.getMessages(uc.conversation_id, 1);
+          const unreadCount = await conversationService.getUnreadCount(uc.conversation_id);
+          
+          const lastMessage = messages[0];
+          return {
+            id: uc.conversation_id,
+            name: uc.conversation.name || "Unknown",
+            message: lastMessage?.content || "No messages yet",
+            time: lastMessage 
+              ? format(new Date(lastMessage.created_at), "h:mm a")
+              : "",
+            unreadCount,
+            isPinned: uc.is_pinned,
+          };
+        })
+      );
+
+      const totalUnread = conversationsWithDetails.reduce(
+        (sum, conv) => sum + (conv.unreadCount || 0),
+        0
+      );
+
+      setTotalUnreadCount(totalUnread);
+      setConversations(conversationsWithDetails.slice(0, 3));
+    } catch (error) {
+      console.error("Error loading dashboard data:", error);
+    }
+  };
+
   const stats = {
-    unreadMessages: 7,
     pendingTasks: 3,
     focusTime: 45, // minutes
   };
-
-  const recentConversations = [
-    { id: "1", name: "Sarah Johnson", message: "Let's discuss the meeting", time: "10:33 AM" },
-    { id: "2", name: "Project Team", message: "Alex: Let's schedule a call", time: "Yesterday" },
-  ];
 
   const todayTasks = [
     { id: "1", title: "Review project proposal", priority: "high", isCompleted: false },
@@ -59,7 +100,7 @@ const Index = () => {
             <Card className="p-4 cursor-pointer hover:bg-accent/50 transition-colors">
               <div className="flex flex-col items-center text-center">
                 <MessageCircle className="h-5 w-5 text-primary mb-2" />
-                <p className="text-2xl font-bold">{stats.unreadMessages}</p>
+                <p className="text-2xl font-bold">{totalUnreadCount}</p>
                 <p className="text-xs text-muted-foreground">Unread</p>
               </div>
             </Card>
@@ -114,19 +155,32 @@ const Index = () => {
           </div>
           
           <div className="space-y-2">
-            {recentConversations.map((conv) => (
-              <Link key={conv.id} to={`/chat/${conv.id}`}>
-                <Card className="p-3 hover:bg-accent/50 transition-colors cursor-pointer">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">{conv.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{conv.message}</p>
+            {conversations.length > 0 ? (
+              conversations.map((conv) => (
+                <Link key={conv.id} to={`/chat/${conv.id}`}>
+                  <Card className="p-3 hover:bg-accent/50 transition-colors cursor-pointer">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-sm">{conv.name}</p>
+                          {conv.unreadCount > 0 && (
+                            <Badge variant="default" className="h-5 min-w-5 rounded-full px-1.5 text-xs">
+                              {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">{conv.message}</p>
+                      </div>
+                      <span className="text-xs text-muted-foreground ml-2">{conv.time}</span>
                     </div>
-                    <span className="text-xs text-muted-foreground ml-2">{conv.time}</span>
-                  </div>
-                </Card>
-              </Link>
-            ))}
+                  </Card>
+                </Link>
+              ))
+            ) : (
+              <Card className="p-4 text-center">
+                <p className="text-sm text-muted-foreground">No conversations yet</p>
+              </Card>
+            )}
           </div>
         </div>
 

@@ -101,6 +101,26 @@ const Chat = () => {
 
     try {
       await messageService.sendMessage(chatId, content);
+      
+      // Auto-reply after 5 seconds
+      setTimeout(async () => {
+        try {
+          const autoReplyMessages = [
+            "Thanks for your message! I'll get back to you soon.",
+            "Got it! Let me check on that.",
+            "Sounds good! I'll look into this.",
+            "Thanks! I'll respond in a bit.",
+            "Received! Talk to you soon.",
+          ];
+          
+          const randomReply = autoReplyMessages[Math.floor(Math.random() * autoReplyMessages.length)];
+          
+          // Send the auto-reply (this will be received via real-time subscription)
+          await messageService.sendMessage(chatId, randomReply);
+        } catch (error) {
+          console.error("Error sending auto-reply:", error);
+        }
+      }, 5000);
     } catch (error) {
       console.error("Error sending message:", error);
       toast({
