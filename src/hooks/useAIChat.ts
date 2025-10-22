@@ -23,16 +23,28 @@ export const useAIChat = ({ onError, type = "chat" }: UseAIChatOptions = {}) => 
     let assistantContent = "";
 
     try {
-      const { data, error } = await supabase.functions.invoke("ai-chat", {
-        body: {
-          messages: [...messages, newUserMessage],
-          type,
-        },
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            messages: [...messages, newUserMessage],
+            type,
+          }),
+        }
+      );
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
 
-      const response = new Response(data);
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
 
