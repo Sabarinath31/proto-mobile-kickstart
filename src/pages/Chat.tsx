@@ -124,24 +124,15 @@ const Chat = () => {
           const { data: { session } } = await supabase.auth.getSession();
           if (!session) throw new Error("No session");
 
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          const response = await fetch(
-            `${supabaseUrl}/functions/v1/send-auto-reply`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${session.access_token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                conversationId: chatId,
-                message: randomReply,
-              }),
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error("Failed to send auto-reply");
+          const { data: fnData, error: fnError } = await supabase.functions.invoke('send-auto-reply', {
+            body: {
+              conversationId: chatId,
+              message: randomReply,
+            },
+          });
+          if (fnError) {
+            console.error('send-auto-reply error:', fnError);
+            throw new Error('Failed to send auto-reply');
           }
           
           setIsTyping(false);
@@ -149,7 +140,7 @@ const Chat = () => {
           console.error("Error sending auto-reply:", error);
           setIsTyping(false);
         }
-      }, 2000);
+      }, 5000);
     } catch (error) {
       console.error("Error sending message:", error);
       toast({

@@ -2,3 +2,6 @@ project_id = "eqvydptwnomggbiyfmbb"
 
 [functions.ai-chat]
 verify_jwt = true
+
+[functions.send-auto-reply]
+verify_jwt = true
