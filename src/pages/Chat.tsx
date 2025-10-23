@@ -22,6 +22,7 @@ const Chat = () => {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string>("");
+  const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -102,7 +103,8 @@ const Chat = () => {
     try {
       await messageService.sendMessage(chatId, content);
       
-      // Auto-reply after 5 seconds
+      // Show typing indicator and auto-reply after 2 seconds
+      setIsTyping(true);
       setTimeout(async () => {
         try {
           const autoReplyMessages = [
@@ -111,16 +113,43 @@ const Chat = () => {
             "Sounds good! I'll look into this.",
             "Thanks! I'll respond in a bit.",
             "Received! Talk to you soon.",
+            "That's interesting! Tell me more.",
+            "I understand. Let me think about that.",
+            "Great! I'll handle this right away.",
           ];
           
           const randomReply = autoReplyMessages[Math.floor(Math.random() * autoReplyMessages.length)];
           
-          // Send the auto-reply (this will be received via real-time subscription)
-          await messageService.sendMessage(chatId, randomReply);
+          // Call edge function to send reply from the other user
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) throw new Error("No session");
+
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          const response = await fetch(
+            `${supabaseUrl}/functions/v1/send-auto-reply`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${session.access_token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                conversationId: chatId,
+                message: randomReply,
+              }),
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error("Failed to send auto-reply");
+          }
+          
+          setIsTyping(false);
         } catch (error) {
           console.error("Error sending auto-reply:", error);
+          setIsTyping(false);
         }
-      }, 5000);
+      }, 2000);
     } catch (error) {
       console.error("Error sending message:", error);
       toast({
@@ -276,21 +305,47 @@ const Chat = () => {
             onScroll={handleScroll}
             className="p-4 pb-20"
           >
-            {messages.map((message) => (
-              <MessageBubble
-                key={message.id}
-                content={message.content || ""}
-                timestamp={new Date(message.created_at).toLocaleTimeString("en-US", {
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
-                isSent={message.sender_id === currentUserId}
-                isRead={true}
-                isDelivered={true}
-                senderName={message.sender_id}
-                isGroup={conversation.is_group}
-              />
-            ))}
+            {messages.length === 0 ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center space-y-2">
+                  <p className="text-muted-foreground">No messages yet</p>
+                  <p className="text-sm text-muted-foreground">Start the conversation!</p>
+                </div>
+              </div>
+            ) : (
+              messages.map((message) => (
+                <MessageBubble
+                  key={message.id}
+                  content={message.content || ""}
+                  timestamp={new Date(message.created_at).toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                  isSent={message.sender_id === currentUserId}
+                  isRead={true}
+                  isDelivered={true}
+                  senderName={conversation.name}
+                  senderAvatar={conversation.avatar_url}
+                  isGroup={conversation.is_group}
+                />
+              ))
+            )}
+            
+            {isTyping && (
+              <div className="flex gap-2 mb-4 justify-start">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={conversation.avatar_url || ""} alt={conversation.name || ""} />
+                  <AvatarFallback className="bg-muted text-xs">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </ScrollArea>
 
