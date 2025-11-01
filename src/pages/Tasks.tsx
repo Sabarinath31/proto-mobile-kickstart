@@ -5,12 +5,13 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { FloatingActionButton } from "@/components/layout/FloatingActionButton";
 import { TaskListItem } from "@/components/tasks/TaskListItem";
 import { TaskDialog } from "@/components/tasks/TaskDialog";
+import { FlowerGrowth } from "@/components/tasks/FlowerGrowth";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import skyBackground from "@/assets/illustrations/sky-background.png";
 
 // Mock data
 const initialTasks = [
@@ -102,21 +103,16 @@ const Tasks = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div 
+      className="min-h-screen bg-cover bg-center"
+      style={{ backgroundImage: `url(${skyBackground})` }}
+    >
       <Header title="Tasks" />
       <PageContainer className="pb-24">
-        {/* Progress Section */}
-        <div className="mb-6 p-4 rounded-lg bg-card border">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-semibold">Today's Progress</h3>
-            <span className="text-sm text-muted-foreground">
-              {completedTasks.length} of {tasks.length} completed
-            </span>
-          </div>
-          <Progress value={completionPercentage} className="h-2" />
-          <p className="text-xs text-muted-foreground mt-2">
-            Keep going! You're making great progress.
-          </p>
+        {/* Progress Section - Flower Growth Visualization */}
+        <div className="mb-6 p-6 rounded-2xl bg-card/95 backdrop-blur-sm border shadow-lg">
+          <h3 className="font-semibold text-center mb-2">Your Growth Today</h3>
+          <FlowerGrowth completionPercentage={completionPercentage} />
         </div>
 
         {/* Filter Tabs */}

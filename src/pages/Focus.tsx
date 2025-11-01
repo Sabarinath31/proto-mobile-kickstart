@@ -2,13 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { Header } from "@/components/layout/Header";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { CircularTimer } from "@/components/focus/CircularTimer";
+import { SunTimer } from "@/components/focus/SunTimer";
+import { FocusModeOverlay } from "@/components/focus/FocusModeOverlay";
+import { BloomCelebration } from "@/components/focus/BloomCelebration";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Play, Pause, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import { Play, Pause, RotateCcw, Volume2, VolumeX, Maximize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import skyBackground from "@/assets/illustrations/sky-background.png";
 
 type TimerMode = "focus" | "break";
 type SessionType = 25 | 15 | 5;
@@ -21,6 +21,8 @@ const Focus = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [sessionsCompleted, setSessionsCompleted] = useState(0);
   const [todayFocusTime, setTodayFocusTime] = useState(0);
+  const [focusModeActive, setFocusModeActive] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
   const { toast } = useToast();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -56,10 +58,7 @@ const Focus = () => {
     if (mode === "focus") {
       setSessionsCompleted((prev) => prev + 1);
       setTodayFocusTime((prev) => prev + sessionLength);
-      toast({
-        title: "Focus session complete! 🎉",
-        description: "Great job! Time for a break.",
-      });
+      setShowCelebration(true);
       setMode("break");
       setTimeRemaining(5 * 60);
     } else {
@@ -104,27 +103,31 @@ const Focus = () => {
   const progress = ((totalTime - timeRemaining) / totalTime) * 100;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header title="Focus Timer" />
-      <PageContainer className="flex flex-col items-center justify-center min-h-[calc(100vh-5rem)] pb-28">
-        {/* Immersive centered layout */}
-        <div className="w-full max-w-md mx-auto space-y-12">
-          
-          {/* Large Circular Timer - Main Focus */}
-          <div className="flex flex-col items-center justify-center space-y-8">
-            <CircularTimer
-              timeRemaining={timeRemaining}
-              totalTime={totalTime}
-              size={320}
-            />
+    <>
+      <div 
+        className="min-h-screen bg-cover bg-center"
+        style={{ backgroundImage: `url(${skyBackground})` }}
+      >
+        <Header title="Focus Timer" />
+        <PageContainer className="flex flex-col items-center justify-center min-h-[calc(100vh-5rem)] pb-28">
+          {/* Immersive centered layout */}
+          <div className="w-full max-w-md mx-auto space-y-12">
             
-            {/* Minimal mode indicator */}
-            <div className="text-center">
-              <p className="text-sm font-medium text-muted-foreground">
-                {mode === "focus" ? "Focus Session" : "Break Time"}
-              </p>
+            {/* Sun Timer - Main Focus */}
+            <div className="flex flex-col items-center justify-center space-y-8">
+              <SunTimer
+                timeRemaining={timeRemaining}
+                totalTime={totalTime}
+                size={320}
+              />
+              
+              {/* Minimal mode indicator */}
+              <div className="text-center">
+                <p className="text-sm font-medium text-muted-foreground">
+                  {mode === "focus" ? "Focus Session" : "Break Time"}
+                </p>
+              </div>
             </div>
-          </div>
 
           {/* Minimalist Controls - Single row */}
           <div className="flex items-center justify-center gap-4">
@@ -167,6 +170,16 @@ const Focus = () => {
                 <VolumeX className="h-5 w-5" />
               )}
             </Button>
+
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => setFocusModeActive(true)}
+              className="h-14 w-14 rounded-full"
+              disabled={!isRunning}
+            >
+              <Maximize2 className="h-5 w-5" />
+            </Button>
           </div>
 
           {/* Session Length Selector - Only when not running */}
@@ -208,6 +221,17 @@ const Focus = () => {
       </PageContainer>
       <BottomNavigation />
     </div>
+
+    <FocusModeOverlay 
+      isActive={focusModeActive}
+      onClose={() => setFocusModeActive(false)}
+    />
+
+    <BloomCelebration
+      show={showCelebration}
+      onClose={() => setShowCelebration(false)}
+    />
+    </>
   );
 };
 

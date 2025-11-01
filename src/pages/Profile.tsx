@@ -4,6 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Header } from "@/components/layout/Header";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { MoodSelector } from "@/components/profile/MoodSelector";
+import { DailyGrowth } from "@/components/profile/DailyGrowth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -69,6 +71,13 @@ const Profile = () => {
       
       <PageContainer>
         <div className="space-y-6 animate-fade-in">
+          {/* Mood Garden Header */}
+          <Card className="overflow-hidden">
+            <CardContent className="pt-6">
+              <MoodSelector />
+            </CardContent>
+          </Card>
+
           {/* Profile Card */}
           <Card>
             <CardContent className="pt-6">
@@ -100,6 +109,13 @@ const Profile = () => {
                   Edit Profile
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Daily Growth Section */}
+          <Card>
+            <CardContent className="pt-6">
+              <DailyGrowth focusSessions={3} />
             </CardContent>
           </Card>
 

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { TaskDialog } from "@/components/tasks/TaskDialog";
+import { QuickReplyButtons } from "@/components/home/QuickReplyButtons";
 import { MessageCircle, CheckCircle2, Timer, Plus, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -15,6 +16,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { conversationService } from "@/services/conversationService";
 import { messageService } from "@/services/messageService";
 import { format } from "date-fns";
+import paperPlane from "@/assets/illustrations/paper-plane.png";
+import starPin from "@/assets/illustrations/star-pin.png";
+import treePlanting from "@/assets/illustrations/tree-planting.png";
+import bookshelf from "@/assets/illustrations/bookshelf.png";
 
 const Index = () => {
   const { toast } = useToast();
@@ -89,9 +94,47 @@ const Index = () => {
       <Header />
       <PageContainer className="pb-24">
         {/* Welcome Section */}
-        <div className="mb-6">
+        <div className="mb-8">
           <h2 className="text-2xl font-bold mb-2">Welcome back!</h2>
-          <p className="text-muted-foreground">Here's your overview for today</p>
+          <p className="text-muted-foreground mb-6">Here's your overview for today</p>
+          <QuickReplyButtons />
+        </div>
+
+        {/* Communication Hub - Illustrated Sections */}
+        <div className="grid grid-cols-2 gap-4 mb-8">
+          <Card className="p-5 text-center space-y-3">
+            <img src={paperPlane} alt="Unread" className="w-16 h-16 mx-auto object-contain" />
+            <div>
+              <p className="text-2xl font-bold text-primary">{totalUnreadCount}</p>
+              <p className="text-xs text-muted-foreground">Unread</p>
+            </div>
+          </Card>
+          
+          <Card className="p-5 text-center space-y-3">
+            <img src={starPin} alt="Pinned" className="w-16 h-16 mx-auto object-contain" />
+            <div>
+              <p className="text-2xl font-bold text-primary">
+                {conversations.filter(c => c.isPinned).length}
+              </p>
+              <p className="text-xs text-muted-foreground">Pinned</p>
+            </div>
+          </Card>
+          
+          <Card className="p-5 text-center space-y-3">
+            <img src={treePlanting} alt="Groups" className="w-16 h-16 mx-auto object-contain" />
+            <div>
+              <p className="text-2xl font-bold text-primary">0</p>
+              <p className="text-xs text-muted-foreground">Groups</p>
+            </div>
+          </Card>
+          
+          <Card className="p-5 text-center space-y-3">
+            <img src={bookshelf} alt="Saved" className="w-16 h-16 mx-auto object-contain" />
+            <div>
+              <p className="text-2xl font-bold text-primary">0</p>
+              <p className="text-xs text-muted-foreground">Saved</p>
+            </div>
+          </Card>
         </div>
 
         {/* Quick Stats */}
