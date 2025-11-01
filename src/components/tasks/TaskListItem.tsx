@@ -37,51 +37,53 @@ export const TaskListItem = ({
   return (
     <div
       className={cn(
-        "flex items-start gap-3 p-4 rounded-lg border transition-all hover:shadow-md",
-        isCompleted && "opacity-60"
+        "flex items-start gap-4 p-5 rounded-xl border bg-card shadow-sm transition-all hover:shadow-md",
+        isCompleted && "opacity-50"
       )}
     >
+      {/* Visual Priority Indicator - Color-coded bar */}
+      <div
+        className={cn(
+          "w-1 h-full rounded-full flex-shrink-0 self-stretch",
+          priority === "high" && "bg-destructive",
+          priority === "medium" && "bg-warning",
+          priority === "low" && "bg-muted"
+        )}
+      />
+
       <Checkbox
         checked={isCompleted}
         onCheckedChange={() => onToggle(id)}
-        className="mt-1"
+        className="mt-1 flex-shrink-0"
       />
 
       <Link to={`/tasks/${id}`} className="flex-1 min-w-0">
-        <div className="space-y-2">
-          <div className="flex items-start justify-between gap-2">
+        <div className="space-y-3">
+          <div className="flex items-start justify-between gap-3">
             <h3
               className={cn(
-                "font-medium text-sm",
+                "font-medium text-base leading-snug",
                 isCompleted && "line-through text-muted-foreground"
               )}
             >
               {title}
             </h3>
-            <div className="flex items-center gap-1">
-              {fromMessage && (
-                <MessageSquare className="h-3 w-3 text-primary" />
-              )}
-              <Badge
-                variant="outline"
-                className={cn("text-xs h-5", priorityColors[priority])}
-              >
-                {priority}
-              </Badge>
-            </div>
+            {fromMessage && (
+              <MessageSquare className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+            )}
           </div>
 
           {description && (
-            <p className="text-xs text-muted-foreground line-clamp-2">
+            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
               {description}
             </p>
           )}
 
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="px-2 py-1 rounded-md bg-accent/50">{category}</span>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <span className="px-3 py-1.5 rounded-full bg-muted font-medium">{category}</span>
             {dueDate && (
-              <div className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
+              <div className="flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5" />
                 <span>{dueDate}</span>
               </div>
             )}
@@ -89,7 +91,7 @@ export const TaskListItem = ({
         </div>
       </Link>
 
-      <Button variant="ghost" size="icon" className="h-8 w-8">
+      <Button variant="ghost" size="icon" className="h-9 w-9 flex-shrink-0">
         <MoreVertical className="h-4 w-4" />
       </Button>
     </div>

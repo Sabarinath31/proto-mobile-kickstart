@@ -8,8 +8,9 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* WhatsMind ADHD-Friendly Color Palette */
-    --background: 210 17% 98%;
+    /* WhatsMind ADHD-Friendly Professional Color Palette */
+    /* Light Gray Background #F8F9FA */
+    --background: 220 14% 98%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -18,27 +19,31 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 236 100% 71%;
+    /* Soft Blue Primary #6B73FF */
+    --primary: 237 100% 71%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 17% 98%;
+    --secondary: 220 14% 98%;
     --secondary-foreground: 222 47% 11%;
 
-    --muted: 210 17% 95%;
+    --muted: 220 14% 96%;
     --muted-foreground: 215 16% 47%;
 
+    /* Gentle Green Completion #10B981 */
     --accent: 160 84% 39%;
     --accent-foreground: 0 0% 100%;
 
+    /* Soft Red Urgent #EF4444 */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
+    /* Warm Orange Priority #F59E0B */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 236 100% 71%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 237 100% 71%;
 
     --radius: 0.75rem;
 
@@ -69,27 +74,31 @@ All colors MUST be HSL.
     --popover: 222 47% 15%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 236 100% 71%;
+    /* Soft Blue Primary - same in dark mode */
+    --primary: 237 100% 71%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 217 33% 18%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217 33% 18%;
+    --muted: 217 33% 20%;
     --muted-foreground: 215 20% 65%;
 
+    /* Gentle Green - same in dark mode */
     --accent: 160 84% 39%;
     --accent-foreground: 0 0% 100%;
 
+    /* Soft Red - same in dark mode */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
+    /* Warm Orange - same in dark mode */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 217 33% 18%;
-    --input: 217 33% 18%;
-    --ring: 236 100% 71%;
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 237 100% 71%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;

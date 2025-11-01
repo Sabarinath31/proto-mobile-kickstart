@@ -31,47 +31,47 @@ export const MessageBubble = ({
     .slice(0, 2);
 
   return (
-    <div className={cn("flex gap-2 mb-4", isSent ? "justify-end" : "justify-start")}>
+    <div className={cn("flex gap-3 mb-6", isSent ? "justify-end" : "justify-start")}>
       {!isSent && isGroup && (
-        <Avatar className="h-8 w-8">
+        <Avatar className="h-9 w-9 flex-shrink-0">
           <AvatarImage src={senderAvatar} alt={senderName} />
           <AvatarFallback className="text-xs bg-muted">{initials}</AvatarFallback>
         </Avatar>
       )}
       
-      <div className={cn("max-w-[75%] space-y-1", isSent && "items-end flex flex-col")}>
+      <div className={cn("max-w-[80%] space-y-1.5", isSent && "items-end flex flex-col")}>
         {!isSent && isGroup && (
-          <span className="text-xs text-muted-foreground px-3">{senderName}</span>
+          <span className="text-xs font-medium text-muted-foreground px-4">{senderName}</span>
         )}
         
         <div
           className={cn(
-            "rounded-2xl px-4 py-2",
+            "rounded-2xl px-5 py-3 shadow-sm",
             isSent
-              ? "bg-primary text-primary-foreground rounded-br-md"
-              : "bg-muted text-foreground rounded-bl-md"
+              ? "bg-primary text-primary-foreground rounded-br-sm"
+              : "bg-card border text-foreground rounded-bl-sm"
           )}
         >
-          <p className="text-sm break-words">{content}</p>
+          <p className="text-[15px] leading-relaxed break-words">{content}</p>
         </div>
         
-        <div className="flex items-center gap-1 px-2">
+        <div className="flex items-center gap-1.5 px-2">
           <span className="text-xs text-muted-foreground">{timestamp}</span>
           {isSent && (
             <span className="text-muted-foreground">
               {isRead ? (
-                <CheckCheck className="h-3 w-3 text-accent" />
+                <CheckCheck className="h-3.5 w-3.5 text-accent" />
               ) : isDelivered ? (
-                <CheckCheck className="h-3 w-3" />
+                <CheckCheck className="h-3.5 w-3.5" />
               ) : (
-                <Check className="h-3 w-3" />
+                <Check className="h-3.5 w-3.5" />
               )}
             </span>
           )}
         </div>
       </div>
       
-      {isSent && isGroup && <div className="h-8 w-8" />}
+      {isSent && isGroup && <div className="h-9 w-9 flex-shrink-0" />}
     </div>
   );
 };

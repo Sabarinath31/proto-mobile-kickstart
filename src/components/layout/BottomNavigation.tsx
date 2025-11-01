@@ -14,8 +14,8 @@ export const BottomNavigation = () => {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-      <div className="container flex h-16 items-center justify-around px-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-card/98 backdrop-blur-sm shadow-lg">
+      <div className="container flex h-20 items-center justify-around px-4">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -25,14 +25,20 @@ export const BottomNavigation = () => {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 rounded-lg px-3 py-2 transition-colors",
+                "relative flex flex-col items-center justify-center gap-2 rounded-xl px-4 py-2.5 transition-all duration-200",
                 isActive
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Icon className="h-5 w-5" />
-              <span className="text-xs font-medium">{item.label}</span>
+              <Icon className={cn("h-6 w-6 transition-transform", isActive && "scale-110")} />
+              <span className={cn("text-xs font-medium", isActive && "font-semibold")}>
+                {item.label}
+              </span>
+              {/* Subtle indicator dot for active state */}
+              {isActive && (
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
+              )}
             </Link>
           );
         })}

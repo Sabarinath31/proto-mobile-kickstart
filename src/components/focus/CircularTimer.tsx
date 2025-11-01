@@ -34,7 +34,7 @@ export const CircularTimer = ({
           r={radius}
           fill="none"
           stroke="hsl(var(--muted))"
-          strokeWidth="10"
+          strokeWidth="12"
         />
         
         {/* Progress circle */}
@@ -44,7 +44,7 @@ export const CircularTimer = ({
           r={radius}
           fill="none"
           stroke="hsl(var(--primary))"
-          strokeWidth="10"
+          strokeWidth="12"
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
@@ -54,11 +54,11 @@ export const CircularTimer = ({
 
       {/* Time display */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-5xl font-bold tabular-nums">
+        <span className="text-6xl font-bold tabular-nums tracking-tight">
           {formatTime(timeRemaining)}
         </span>
-        <span className="text-sm text-muted-foreground mt-2">
-          {progress === 0 ? "Ready to start" : "Remaining"}
+        <span className="text-sm text-muted-foreground mt-3">
+          {progress === 0 ? "Ready" : "Remaining"}
         </span>
       </div>
     </div>

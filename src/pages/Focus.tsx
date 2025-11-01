@@ -106,116 +106,105 @@ const Focus = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header title="Focus Timer" />
-      <PageContainer className="pb-20">
-        {/* Stats Section */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <Card className="p-4">
-            <p className="text-sm text-muted-foreground mb-1">Sessions Today</p>
-            <p className="text-2xl font-bold">{sessionsCompleted}</p>
-          </Card>
-          <Card className="p-4">
-            <p className="text-sm text-muted-foreground mb-1">Focus Time</p>
-            <p className="text-2xl font-bold">{todayFocusTime}m</p>
-          </Card>
-        </div>
-
-        {/* Mode Badge */}
-        <div className="flex justify-center mb-6">
-          <Badge
-            variant={mode === "focus" ? "default" : "secondary"}
-            className="text-sm px-4 py-2"
-          >
-            {mode === "focus" ? "Focus Mode" : "Break Time"}
-          </Badge>
-        </div>
-
-        {/* Timer Display */}
-        <div className="flex justify-center mb-8">
-          <CircularTimer
-            timeRemaining={timeRemaining}
-            totalTime={totalTime}
-            size={280}
-          />
-        </div>
-
-        {/* Controls */}
-        <div className="flex justify-center gap-4 mb-8">
-          <Button
-            size="lg"
-            onClick={isRunning ? handlePause : handleStart}
-            className="w-32"
-          >
-            {isRunning ? (
-              <>
-                <Pause className="h-5 w-5 mr-2" />
-                Pause
-              </>
-            ) : (
-              <>
-                <Play className="h-5 w-5 mr-2" />
-                Start
-              </>
-            )}
-          </Button>
-
-          <Button size="lg" variant="outline" onClick={handleReset}>
-            <RotateCcw className="h-5 w-5" />
-          </Button>
-
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => setSoundEnabled(!soundEnabled)}
-          >
-            {soundEnabled ? (
-              <Volume2 className="h-5 w-5" />
-            ) : (
-              <VolumeX className="h-5 w-5" />
-            )}
-          </Button>
-        </div>
-
-        {/* Session Length Selector */}
-        {mode === "focus" && !isRunning && (
-          <div className="space-y-3 mb-6">
-            <p className="text-sm font-medium text-center">Session Length</p>
-            <div className="grid grid-cols-3 gap-3">
-              {([25, 15, 5] as SessionType[]).map((length) => (
-                <Button
-                  key={length}
-                  variant={sessionLength === length ? "default" : "outline"}
-                  onClick={() => handleSessionChange(length)}
-                  className="h-12"
-                >
-                  {length} min
-                </Button>
-              ))}
+      <PageContainer className="flex flex-col items-center justify-center min-h-[calc(100vh-5rem)] pb-28">
+        {/* Immersive centered layout */}
+        <div className="w-full max-w-md mx-auto space-y-12">
+          
+          {/* Large Circular Timer - Main Focus */}
+          <div className="flex flex-col items-center justify-center space-y-8">
+            <CircularTimer
+              timeRemaining={timeRemaining}
+              totalTime={totalTime}
+              size={320}
+            />
+            
+            {/* Minimal mode indicator */}
+            <div className="text-center">
+              <p className="text-sm font-medium text-muted-foreground">
+                {mode === "focus" ? "Focus Session" : "Break Time"}
+              </p>
             </div>
           </div>
-        )}
 
-        {/* Current Task (if applicable) */}
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground mb-2">Current Focus</p>
-          <p className="font-medium">
-            {mode === "focus"
-              ? "Stay focused on your current task"
-              : "Take a short break and relax"}
-          </p>
-          {isRunning && (
-            <Progress value={progress} className="h-1 mt-3" />
+          {/* Minimalist Controls - Single row */}
+          <div className="flex items-center justify-center gap-4">
+            <Button
+              size="lg"
+              onClick={isRunning ? handlePause : handleStart}
+              className="h-14 px-8 rounded-full text-base font-medium shadow-lg"
+            >
+              {isRunning ? (
+                <>
+                  <Pause className="h-5 w-5 mr-2" />
+                  Pause
+                </>
+              ) : (
+                <>
+                  <Play className="h-5 w-5 mr-2" />
+                  Start
+                </>
+              )}
+            </Button>
+
+            <Button 
+              size="lg" 
+              variant="outline" 
+              onClick={handleReset}
+              className="h-14 w-14 rounded-full"
+            >
+              <RotateCcw className="h-5 w-5" />
+            </Button>
+
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => setSoundEnabled(!soundEnabled)}
+              className="h-14 w-14 rounded-full"
+            >
+              {soundEnabled ? (
+                <Volume2 className="h-5 w-5" />
+              ) : (
+                <VolumeX className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
+
+          {/* Session Length Selector - Only when not running */}
+          {mode === "focus" && !isRunning && (
+            <div className="space-y-4">
+              <p className="text-sm font-medium text-center text-muted-foreground">
+                Session Length
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                {([25, 15, 5] as SessionType[]).map((length) => (
+                  <Button
+                    key={length}
+                    variant={sessionLength === length ? "default" : "outline"}
+                    onClick={() => handleSessionChange(length)}
+                    className="h-14 rounded-xl text-base"
+                  >
+                    {length} min
+                  </Button>
+                ))}
+              </div>
+            </div>
           )}
-        </Card>
 
-        {/* Tips Section */}
-        <Card className="p-4 mt-6 bg-accent/20 border-accent">
-          <p className="text-sm font-medium mb-2">💡 Focus Tip</p>
-          <p className="text-sm text-muted-foreground">
-            {mode === "focus"
-              ? "Eliminate distractions and focus on one task at a time for better results."
-              : "Use your break to stretch, hydrate, or take a short walk."}
-          </p>
-        </Card>
+          {/* Stats - Minimal and subtle */}
+          {!isRunning && (
+            <div className="flex items-center justify-center gap-8 pt-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-primary">{sessionsCompleted}</p>
+                <p className="text-xs text-muted-foreground mt-1">Sessions</p>
+              </div>
+              <div className="h-8 w-px bg-border" />
+              <div className="text-center">
+                <p className="text-2xl font-bold text-primary">{todayFocusTime}m</p>
+                <p className="text-xs text-muted-foreground mt-1">Focus Time</p>
+              </div>
+            </div>
+          )}
+        </div>
       </PageContainer>
       <BottomNavigation />
     </div>
