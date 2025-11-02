@@ -177,12 +177,14 @@ const Chat = () => {
     }
   };
 
-  const handleConvertToTask = async () => {
-    if (!chatId || messages.length === 0) return;
+  const handleConvertToTask = async (messageId?: string) => {
+    if (!chatId) return;
 
     try {
-      const lastMessage = messages[messages.length - 1];
-      await messageService.convertToTask(lastMessage.id, chatId);
+      const targetMessageId = messageId || messages[messages.length - 1]?.id;
+      if (!targetMessageId) return;
+      
+      await messageService.convertToTask(targetMessageId, chatId);
       
       toast({
         title: "Task created",
@@ -278,7 +280,7 @@ const Chat = () => {
             <Button variant="ghost" size="icon">
               <Video className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleConvertToTask}>
+            <Button variant="ghost" size="icon" onClick={() => handleConvertToTask()}>
               <CheckSquare className="h-5 w-5" />
             </Button>
             <Button variant="ghost" size="icon">
@@ -318,6 +320,7 @@ const Chat = () => {
                   senderName={conversation.name}
                   senderAvatar={conversation.avatar_url}
                   isGroup={conversation.is_group}
+                  onConvertToTask={() => handleConvertToTask(message.id)}
                 />
               ))
             )}
