@@ -22,7 +22,7 @@ const Chat = () => {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string>("");
-  const [isTyping, setIsTyping] = useState(false);
+  
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -102,45 +102,6 @@ const Chat = () => {
 
     try {
       await messageService.sendMessage(chatId, content);
-      
-      // Show typing indicator and auto-reply after 2 seconds
-      setIsTyping(true);
-      setTimeout(async () => {
-        try {
-          const autoReplyMessages = [
-            "Thanks for your message! I'll get back to you soon.",
-            "Got it! Let me check on that.",
-            "Sounds good! I'll look into this.",
-            "Thanks! I'll respond in a bit.",
-            "Received! Talk to you soon.",
-            "That's interesting! Tell me more.",
-            "I understand. Let me think about that.",
-            "Great! I'll handle this right away.",
-          ];
-          
-          const randomReply = autoReplyMessages[Math.floor(Math.random() * autoReplyMessages.length)];
-          
-          // Call edge function to send reply from the other user
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session) throw new Error("No session");
-
-          const { data: fnData, error: fnError } = await supabase.functions.invoke('send-auto-reply', {
-            body: {
-              conversationId: chatId,
-              message: randomReply,
-            },
-          });
-          if (fnError) {
-            console.error('send-auto-reply error:', fnError);
-            throw new Error('Failed to send auto-reply');
-          }
-          
-          setIsTyping(false);
-        } catch (error) {
-          console.error("Error sending auto-reply:", error);
-          setIsTyping(false);
-        }
-      }, 5000);
     } catch (error) {
       console.error("Error sending message:", error);
       toast({
@@ -323,22 +284,6 @@ const Chat = () => {
                   onConvertToTask={() => handleConvertToTask(message.id)}
                 />
               ))
-            )}
-            
-            {isTyping && (
-              <div className="flex gap-2 mb-4 justify-start">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={conversation.avatar_url || ""} alt={conversation.name || ""} />
-                  <AvatarFallback className="bg-muted text-xs">{initials}</AvatarFallback>
-                </Avatar>
-                <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
-                  <div className="flex gap-1">
-                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
-                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
-                  </div>
-                </div>
-              </div>
             )}
           </div>
         </ScrollArea>
