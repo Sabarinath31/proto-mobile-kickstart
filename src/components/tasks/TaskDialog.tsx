@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,19 @@ export const TaskDialog = ({
     initialTask?.dueDate ? new Date(initialTask.dueDate) : undefined
   );
 
+  // Update form when initialTask changes
+  useEffect(() => {
+    if (initialTask) {
+      setTitle(initialTask.title || "");
+      setDescription(initialTask.description || "");
+      setPriority(initialTask.priority || "medium");
+      setCategory(initialTask.category || "Personal");
+      setDueDate(initialTask.dueDate ? new Date(initialTask.dueDate) : undefined);
+    } else {
+      resetForm();
+    }
+  }, [initialTask, open]);
+
   const handleSave = () => {
     onSave({
       id: initialTask?.id || Date.now().toString(),
@@ -51,7 +65,7 @@ export const TaskDialog = ({
       description,
       priority,
       category,
-      dueDate: dueDate ? format(dueDate, "MMM dd, yyyy") : undefined,
+      dueDate: dueDate?.toISOString(),
       isCompleted: initialTask?.isCompleted || false,
     });
     onOpenChange(false);
@@ -73,6 +87,9 @@ export const TaskDialog = ({
           <DialogTitle>
             {initialTask ? "Edit Task" : "Create New Task"}
           </DialogTitle>
+          <DialogDescription>
+            {initialTask ? "Update task details below." : "Fill in the details for your new task."}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">

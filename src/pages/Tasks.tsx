@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/Header";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -11,94 +11,120 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { taskService, Task } from "@/services/taskService";
+import { supabase } from "@/integrations/supabase/client";
 import skyBackground from "@/assets/illustrations/sky-background.png";
-
-// Mock data
-const initialTasks = [
-  {
-    id: "1",
-    title: "Review project proposal",
-    description: "Check the latest updates and provide feedback",
-    dueDate: "Dec 20, 2024",
-    priority: "high" as const,
-    category: "Work",
-    isCompleted: false,
-    fromMessage: true,
-  },
-  {
-    id: "2",
-    title: "Buy groceries",
-    description: "Milk, eggs, bread, vegetables",
-    dueDate: "Dec 18, 2024",
-    priority: "medium" as const,
-    category: "Shopping",
-    isCompleted: false,
-    fromMessage: false,
-  },
-  {
-    id: "3",
-    title: "Call dentist",
-    dueDate: "Dec 19, 2024",
-    priority: "high" as const,
-    category: "Health",
-    isCompleted: false,
-    fromMessage: false,
-  },
-  {
-    id: "4",
-    title: "Finish report",
-    description: "Complete quarterly sales report",
-    dueDate: "Dec 17, 2024",
-    priority: "low" as const,
-    category: "Work",
-    isCompleted: true,
-    fromMessage: false,
-  },
-];
+import { format } from "date-fns";
 
 const Tasks = () => {
-  const [tasks, setTasks] = useState(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [showCompleted, setShowCompleted] = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
   const [activeCategory, setActiveCategory] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
   const { toast } = useToast();
+
+  useEffect(() => {
+    loadTasks();
+    subscribeToTasks();
+  }, []);
+
+  const loadTasks = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      setCurrentUserId(user.id);
+      const tasksData = await taskService.getTasks(user.id);
+      setTasks(tasksData as Task[]);
+    } catch (error) {
+      console.error("Error loading tasks:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load tasks",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const subscribeToTasks = () => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+
+      const channel = taskService.subscribeToTasks(user.id, () => {
+        loadTasks();
+      });
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    });
+  };
 
   const categories = ["all", "Personal", "Work", "Shopping", "Health", "Other"];
 
   const filteredTasks = tasks.filter((task) => {
-    const matchesFilter = activeFilter === "all" || !task.isCompleted;
-    const matchesCategory = activeCategory === "all" || task.category === activeCategory;
+    const matchesFilter = activeFilter === "all" || !task.is_completed;
+    const matchesCategory = activeCategory === "all"; // TODO: Add category filtering
     return matchesFilter && matchesCategory;
   });
 
-  const activeTasks = filteredTasks.filter((t) => !t.isCompleted);
-  const completedTasks = filteredTasks.filter((t) => t.isCompleted);
+  const activeTasks = filteredTasks.filter((t) => !t.is_completed);
+  const completedTasks = filteredTasks.filter((t) => t.is_completed);
   const completionPercentage = tasks.length > 0
     ? Math.round((completedTasks.length / tasks.length) * 100)
     : 0;
 
-  const handleToggleTask = (id: string) => {
-    setTasks(tasks.map((task) =>
-      task.id === id ? { ...task, isCompleted: !task.isCompleted } : task
-    ));
-    
-    const task = tasks.find((t) => t.id === id);
-    if (task) {
+  const handleToggleTask = async (id: string) => {
+    try {
+      await taskService.toggleComplete(id);
+      const task = tasks.find((t) => t.id === id);
+      if (task) {
+        toast({
+          title: task.is_completed ? "Task reopened" : "Task completed! 🎉",
+          description: task.is_completed ? task.title : `Great job completing "${task.title}"`,
+        });
+      }
+    } catch (error) {
+      console.error("Error toggling task:", error);
       toast({
-        title: task.isCompleted ? "Task reopened" : "Task completed! 🎉",
-        description: task.isCompleted ? task.title : `Great job completing "${task.title}"`,
+        title: "Error",
+        description: "Failed to update task",
+        variant: "destructive",
       });
     }
   };
 
-  const handleSaveTask = (task: any) => {
-    if (task.id && tasks.find((t) => t.id === task.id)) {
-      setTasks(tasks.map((t) => (t.id === task.id ? task : t)));
-      toast({ title: "Task updated", description: "Your task has been updated successfully." });
-    } else {
-      setTasks([...tasks, task]);
-      toast({ title: "Task created", description: "New task added to your list." });
+  const handleSaveTask = async (taskData: any) => {
+    try {
+      if (taskData.id && tasks.find((t) => t.id === taskData.id)) {
+        await taskService.updateTask(taskData.id, {
+          title: taskData.title,
+          description: taskData.description,
+          priority: taskData.priority,
+          due_date: taskData.dueDate,
+        });
+        toast({ title: "Task updated", description: "Your task has been updated successfully." });
+      } else {
+        await taskService.createTask({
+          title: taskData.title,
+          description: taskData.description,
+          priority: taskData.priority,
+          due_date: taskData.dueDate,
+        });
+        toast({ title: "Task created", description: "New task added to your list." });
+      }
+    } catch (error) {
+      console.error("Error saving task:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save task",
+        variant: "destructive",
+      });
     }
   };
 
@@ -139,11 +165,22 @@ const Tasks = () => {
 
         {/* Active Tasks */}
         <div className="space-y-3 mb-6">
-          {activeTasks.length > 0 ? (
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <p className="text-muted-foreground">Loading tasks...</p>
+            </div>
+          ) : activeTasks.length > 0 ? (
             activeTasks.map((task) => (
               <TaskListItem
                 key={task.id}
-                {...task}
+                id={task.id}
+                title={task.title}
+                description={task.description || undefined}
+                dueDate={task.due_date ? format(new Date(task.due_date), "MMM dd, yyyy") : undefined}
+                priority={task.priority}
+                category={task.category_id || "Other"}
+                isCompleted={task.is_completed}
+                fromMessage={!!task.created_from_message_id}
                 onToggle={handleToggleTask}
               />
             ))
@@ -180,7 +217,14 @@ const Tasks = () => {
                 {completedTasks.map((task) => (
                   <TaskListItem
                     key={task.id}
-                    {...task}
+                    id={task.id}
+                    title={task.title}
+                    description={task.description || undefined}
+                    dueDate={task.due_date ? format(new Date(task.due_date), "MMM dd, yyyy") : undefined}
+                    priority={task.priority}
+                    category={task.category_id || "Other"}
+                    isCompleted={task.is_completed}
+                    fromMessage={!!task.created_from_message_id}
                     onToggle={handleToggleTask}
                   />
                 ))}

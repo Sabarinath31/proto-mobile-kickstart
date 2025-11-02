@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { MessageBubble } from "@/components/messages/MessageBubble";
 import { MessageInput } from "@/components/messages/MessageInput";
 import { VoiceRecorder } from "@/components/messages/VoiceRecorder";
+import { TaskDialog } from "@/components/tasks/TaskDialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, MoreVertical, Phone, Video, ArrowDown, CheckSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { messageService, Message } from "@/services/messageService";
 import { conversationService } from "@/services/conversationService";
+import { taskService } from "@/services/taskService";
 import { supabase } from "@/integrations/supabase/client";
 
 const Chat = () => {
@@ -22,7 +24,8 @@ const Chat = () => {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string>("");
-  
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [messageToConvert, setMessageToConvert] = useState<Message | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -138,19 +141,34 @@ const Chat = () => {
     }
   };
 
-  const handleConvertToTask = async (messageId?: string) => {
-    if (!chatId) return;
+  const handleConvertToTask = (messageId?: string) => {
+    const targetMessageId = messageId || messages[messages.length - 1]?.id;
+    const message = messages.find((m) => m.id === targetMessageId);
+    
+    if (message) {
+      setMessageToConvert(message);
+      setTaskDialogOpen(true);
+    }
+  };
 
+  const handleSaveTaskFromMessage = async (taskData: any) => {
     try {
-      const targetMessageId = messageId || messages[messages.length - 1]?.id;
-      if (!targetMessageId) return;
-      
-      await messageService.convertToTask(targetMessageId, chatId);
-      
+      if (!messageToConvert) return;
+
+      await taskService.createTask({
+        title: taskData.title,
+        description: taskData.description,
+        priority: taskData.priority,
+        due_date: taskData.dueDate,
+        created_from_message_id: messageToConvert.id,
+      });
+
       toast({
         title: "Task created",
         description: "Message converted to task successfully.",
       });
+      
+      setMessageToConvert(null);
     } catch (error) {
       console.error("Error converting to task:", error);
       toast({
@@ -322,6 +340,16 @@ const Chat = () => {
           />
         )}
       </div>
+
+      <TaskDialog
+        open={taskDialogOpen}
+        onOpenChange={setTaskDialogOpen}
+        onSave={handleSaveTaskFromMessage}
+        initialTask={messageToConvert ? {
+          title: messageToConvert.content?.substring(0, 100) || "New task from message",
+          description: messageToConvert.content,
+        } : undefined}
+      />
     </div>
   );
 };
