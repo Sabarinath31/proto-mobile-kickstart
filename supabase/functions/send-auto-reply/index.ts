@@ -38,19 +38,18 @@ serve(async (req) => {
       throw new Error("No participants found");
     }
 
-    // Find a participant that is not the current user
+    // Find a participant that is not the current user, or use a bot UUID
     const otherUser = participants.find((p) => p.user_id !== user.id);
     
-    if (!otherUser) {
-      throw new Error("No other user found in conversation");
-    }
+    // Use bot UUID if no other user exists (for demo conversations)
+    const senderId = otherUser?.user_id || "00000000-0000-0000-0000-000000000000";
 
-    // Send message as the other user
+    // Send message as the other user or bot
     const { data: newMessage, error } = await supabaseAdmin
       .from("messages")
       .insert({
         conversation_id: conversationId,
-        sender_id: otherUser.user_id,
+        sender_id: senderId,
         content: message,
         message_type: "text",
       })
