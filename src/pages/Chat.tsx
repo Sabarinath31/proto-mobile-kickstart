@@ -5,6 +5,7 @@ import { MessageBubble } from "@/components/messages/MessageBubble";
 import { MessageInput } from "@/components/messages/MessageInput";
 import { VoiceRecorder } from "@/components/messages/VoiceRecorder";
 import { TaskDialog } from "@/components/tasks/TaskDialog";
+import { QuickReplyButtons } from "@/components/home/QuickReplyButtons";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, MoreVertical, Phone, Video, ArrowDown, CheckSquare } from "lucide-react";
@@ -319,6 +320,9 @@ const Chat = () => {
 
       {/* Input Area */}
       <div className="border-t">
+        <div className="p-3 border-b">
+          <QuickReplyButtons onReplyClick={handleSendMessage} />
+        </div>
         {isRecording ? (
           <VoiceRecorder
             onSend={handleSendVoice}

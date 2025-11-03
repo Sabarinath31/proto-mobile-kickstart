@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { TaskDialog } from "@/components/tasks/TaskDialog";
-import { QuickReplyButtons } from "@/components/home/QuickReplyButtons";
+
 import { MessageCircle, CheckCircle2, Timer, Plus, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -97,7 +97,6 @@ const Index = () => {
         <div className="mb-8">
           <h2 className="text-2xl font-bold mb-2">Welcome back!</h2>
           <p className="text-muted-foreground mb-6">Here's your overview for today</p>
-          <QuickReplyButtons />
         </div>
 
         {/* Communication Hub - Illustrated Sections */}
