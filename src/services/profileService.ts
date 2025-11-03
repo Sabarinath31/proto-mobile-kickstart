@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 export interface Profile {
   id: string;
   user_id: string;
+  username: string;
   display_name: string | null;
   avatar_url: string | null;
   bio: string | null;
@@ -11,6 +12,14 @@ export interface Profile {
   app_preferences: any;
   created_at: string;
   updated_at: string;
+}
+
+export interface UserSearchResult {
+  id: string;
+  user_id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
 }
 
 export const profileService = {
@@ -63,5 +72,18 @@ export const profileService = {
       .remove([path]);
 
     if (error) throw error;
+  },
+
+  async searchUsers(query: string): Promise<UserSearchResult[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { data, error } = await supabase.rpc("search_users", {
+      search_query: query,
+      requesting_user_id: user.id,
+    });
+
+    if (error) throw error;
+    return data || [];
   },
 };

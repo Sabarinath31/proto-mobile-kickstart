@@ -195,6 +195,7 @@ export type Database = {
           phone_number: string | null
           updated_at: string
           user_id: string
+          username: string
         }
         Insert: {
           app_preferences?: Json | null
@@ -207,6 +208,7 @@ export type Database = {
           phone_number?: string | null
           updated_at?: string
           user_id: string
+          username: string
         }
         Update: {
           app_preferences?: Json | null
@@ -219,6 +221,7 @@ export type Database = {
           phone_number?: string | null
           updated_at?: string
           user_id?: string
+          username?: string
         }
         Relationships: []
       }
@@ -358,6 +361,16 @@ export type Database = {
           rank: number
           title: string
           user_id: string
+        }[]
+      }
+      search_users: {
+        Args: { requesting_user_id: string; search_query: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          id: string
+          user_id: string
+          username: string
         }[]
       }
     }

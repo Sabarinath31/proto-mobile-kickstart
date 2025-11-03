@@ -164,6 +164,68 @@ export const conversationService = {
     if (error) throw error;
   },
 
+  async findOrCreateDirectConversation(otherUserId: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    // Check if a direct conversation already exists between these two users
+    const { data: existingConversations } = await supabase
+      .from("user_conversations")
+      .select("conversation_id")
+      .eq("user_id", user.id);
+
+    if (existingConversations) {
+      for (const uc of existingConversations) {
+        const { data: otherUserConv } = await supabase
+          .from("user_conversations")
+          .select("conversation_id, conversations!inner(is_group)")
+          .eq("conversation_id", uc.conversation_id)
+          .eq("user_id", otherUserId)
+          .single();
+
+        if (otherUserConv && !otherUserConv.conversations.is_group) {
+          // Found existing direct conversation
+          return uc.conversation_id;
+        }
+      }
+    }
+
+    // Get other user's profile for conversation name
+    const { data: otherProfile } = await supabase
+      .from("profiles")
+      .select("display_name, username")
+      .eq("user_id", otherUserId)
+      .single();
+
+    // No existing conversation, create new one
+    const conversationName = otherProfile?.display_name || otherProfile?.username || "Chat";
+    
+    const { data: conversation, error: convError } = await supabase
+      .from("conversations")
+      .insert({
+        name: conversationName,
+        is_group: false,
+        created_by: user.id,
+        category: "other",
+      })
+      .select()
+      .single();
+
+    if (convError) throw convError;
+
+    // Add both users to the conversation
+    const { error: userConvError } = await supabase
+      .from("user_conversations")
+      .insert([
+        { user_id: user.id, conversation_id: conversation.id },
+        { user_id: otherUserId, conversation_id: conversation.id },
+      ]);
+
+    if (userConvError) throw userConvError;
+
+    return conversation.id;
+  },
+
   subscribeToConversations(userId: string, callback: (payload: any) => void) {
     return supabase
       .channel(`user_conversations:${userId}`)

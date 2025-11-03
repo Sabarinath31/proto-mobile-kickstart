@@ -92,7 +92,8 @@ const Profile = () => {
                   <h3 className="text-lg font-semibold">
                     {profile?.display_name || user?.email}
                   </h3>
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  <p className="text-sm text-muted-foreground">@{profile?.username}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{user?.email}</p>
                   {profile?.bio && (
                     <p className="mt-2 text-sm text-muted-foreground">{profile.bio}</p>
                   )}

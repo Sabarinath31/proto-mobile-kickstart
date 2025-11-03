@@ -13,6 +13,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { FloatingActionButton } from "@/components/layout/FloatingActionButton";
 import { NewChatDialog } from "@/components/messages/NewChatDialog";
+import { profileService, UserSearchResult } from "@/services/profileService";
+import { useNavigate } from "react-router-dom";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ChatWithDetails {
   id: string;
@@ -33,7 +36,9 @@ const Messages = () => {
   const [chats, setChats] = useState<ChatWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
+  const [userSearchResults, setUserSearchResults] = useState<UserSearchResult[]>([]);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadConversations();
@@ -118,10 +123,16 @@ const Messages = () => {
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
       loadConversations();
+      setUserSearchResults([]);
       return;
     }
 
     try {
+      // Search for users by username
+      const users = await profileService.searchUsers(searchQuery);
+      setUserSearchResults(users);
+
+      // Search messages
       const results = await messageService.searchMessages(searchQuery);
       // Group results by conversation
       const conversationIds = [...new Set(results.map((r: any) => r.conversation_id))];
@@ -150,12 +161,27 @@ const Messages = () => {
     }
   };
 
+  const handleUserClick = async (userId: string) => {
+    try {
+      const conversationId = await conversationService.findOrCreateDirectConversation(userId);
+      navigate(`/chat/${conversationId}`);
+    } catch (error) {
+      console.error("Error starting conversation:", error);
+      toast({
+        title: "Error",
+        description: "Failed to start conversation",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery) {
         handleSearch();
       } else {
         loadConversations();
+        setUserSearchResults([]);
       }
     }, 300);
 
@@ -192,12 +218,41 @@ const Messages = () => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Search conversations..."
+            placeholder="Search users or conversations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
           />
         </div>
+
+        {/* User Search Results */}
+        {searchQuery && userSearchResults.length > 0 && (
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-1">Users</h3>
+            <div className="space-y-1">
+              {userSearchResults.map((user) => (
+                <div
+                  key={user.id}
+                  onClick={() => handleUserClick(user.user_id)}
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                >
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={user.avatar_url || undefined} />
+                    <AvatarFallback>
+                      {user.display_name?.[0]?.toUpperCase() || user.username[0].toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">
+                      {user.display_name || user.username}
+                    </p>
+                    <p className="text-sm text-muted-foreground">@{user.username}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Filter Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
@@ -249,6 +304,9 @@ const Messages = () => {
         </div>
 
         {/* Chat List */}
+        {searchQuery && userSearchResults.length > 0 && (
+          <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-1">Conversations</h3>
+        )}
         <div className="space-y-2">
           {loading ? (
             <div className="flex justify-center py-12">

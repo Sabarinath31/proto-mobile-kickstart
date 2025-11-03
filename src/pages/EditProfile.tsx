@@ -175,6 +175,18 @@ const EditProfile = () => {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  value={profile?.username || ""}
+                  disabled
+                />
+                <p className="text-sm text-muted-foreground">
+                  Your unique user ID for others to find you
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="display_name">Display Name</Label>
                 <Input
                   id="display_name"
