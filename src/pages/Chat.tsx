@@ -8,7 +8,13 @@ import { TaskDialog } from "@/components/tasks/TaskDialog";
 import { QuickReplyButtons } from "@/components/home/QuickReplyButtons";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, MoreVertical, Phone, Video, ArrowDown, CheckSquare } from "lucide-react";
+import { ArrowLeft, MoreVertical, Phone, Video, ArrowDown, CheckSquare, MailX } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { messageService, Message } from "@/services/messageService";
 import { conversationService } from "@/services/conversationService";
@@ -201,6 +207,26 @@ const Chat = () => {
     }
   };
 
+  const handleMarkAsUnread = async () => {
+    if (!chatId) return;
+
+    try {
+      await conversationService.markAsUnread(chatId);
+      toast({
+        title: "Marked as unread",
+        description: "This conversation has been marked as unread.",
+      });
+      navigate("/messages");
+    } catch (error) {
+      console.error("Error marking as unread:", error);
+      toast({
+        title: "Error",
+        description: "Failed to mark conversation as unread",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -263,9 +289,19 @@ const Chat = () => {
             <Button variant="ghost" size="icon" onClick={() => handleConvertToTask()}>
               <CheckSquare className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon">
-              <MoreVertical className="h-5 w-5" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreVertical className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleMarkAsUnread}>
+                  <MailX className="h-4 w-4 mr-2" />
+                  Mark as Unread
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>

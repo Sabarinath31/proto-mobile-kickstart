@@ -129,6 +129,19 @@ export const conversationService = {
     if (error) throw error;
   },
 
+  async markAsUnread(conversationId: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { error } = await supabase
+      .from("user_conversations")
+      .update({ last_read_at: null })
+      .eq("conversation_id", conversationId)
+      .eq("user_id", user.id);
+
+    if (error) throw error;
+  },
+
   async getUnreadCount(conversationId: string) {
     const { data, error } = await supabase.rpc("get_unread_count", {
       p_conversation_id: conversationId,
