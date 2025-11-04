@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import sunGlow from "@/assets/illustrations/sun-glow.png";
+import { removeBackground, loadImage } from "@/utils/backgroundRemoval";
 
 interface SunTimerProps {
   timeRemaining: number;
@@ -10,6 +11,24 @@ interface SunTimerProps {
 export const SunTimer = ({ timeRemaining, totalTime, size = 320 }: SunTimerProps) => {
   const progress = 1 - timeRemaining / totalTime;
   const sunPosition = progress * 100;
+  const [processedSunImage, setProcessedSunImage] = useState<string>(sunGlow);
+
+  useEffect(() => {
+    const processImage = async () => {
+      try {
+        const img = await loadImage(sunGlow);
+        const blob = await removeBackground(img);
+        const url = URL.createObjectURL(blob);
+        setProcessedSunImage(url);
+        
+        return () => URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error("Failed to remove background:", error);
+      }
+    };
+
+    processImage();
+  }, []);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -48,7 +67,7 @@ export const SunTimer = ({ timeRemaining, totalTime, size = 320 }: SunTimerProps
         }}
       >
         <img
-          src={sunGlow}
+          src={processedSunImage}
           alt="Sun"
           className="w-20 h-20 object-contain animate-[pulse_3s_ease-in-out_infinite]"
         />
