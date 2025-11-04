@@ -15,6 +15,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { conversationService } from "@/services/conversationService";
 import { messageService } from "@/services/messageService";
+import { taskService } from "@/services/taskService";
 import { format } from "date-fns";
 
 const Index = () => {
@@ -22,9 +23,27 @@ const Index = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [conversations, setConversations] = useState<any[]>([]);
   const [totalUnreadCount, setTotalUnreadCount] = useState(0);
+  const [pendingTasksCount, setPendingTasksCount] = useState(0);
+  const [todayTasks, setTodayTasks] = useState<any[]>([]);
 
   useEffect(() => {
     loadDashboardData();
+    loadTasks();
+
+    const setupTaskSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const subscription = taskService.subscribeToTasks(user.id, () => {
+          loadTasks();
+        });
+
+        return () => {
+          subscription.unsubscribe();
+        };
+      }
+    };
+
+    setupTaskSubscription();
   }, []);
 
   const loadDashboardData = async () => {
@@ -65,16 +84,24 @@ const Index = () => {
     }
   };
 
-  const stats = {
-    pendingTasks: 3,
-    focusTime: 45, // minutes
+  const loadTasks = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const allTasks = await taskService.getTasks(user.id, false);
+      const today = await taskService.getTodayTasks(user.id);
+      
+      setPendingTasksCount(allTasks.length);
+      setTodayTasks(today.slice(0, 3));
+    } catch (error) {
+      console.error("Error loading tasks:", error);
+    }
   };
 
-  const todayTasks = [
-    { id: "1", title: "Review project proposal", priority: "high", isCompleted: false },
-    { id: "2", title: "Buy groceries", priority: "medium", isCompleted: false },
-    { id: "3", title: "Call dentist", priority: "high", isCompleted: false },
-  ];
+  const stats = {
+    focusTime: 45, // minutes
+  };
 
   const completedTasks = todayTasks.filter(t => t.isCompleted).length;
   const totalTasks = todayTasks.length;
@@ -111,7 +138,7 @@ const Index = () => {
             <Card className="p-4 cursor-pointer hover:bg-accent/50 transition-colors">
               <div className="flex flex-col items-center text-center">
                 <CheckCircle2 className="h-5 w-5 text-accent mb-2" />
-                <p className="text-2xl font-bold">{stats.pendingTasks}</p>
+                <p className="text-2xl font-bold">{pendingTasksCount}</p>
                 <p className="text-xs text-muted-foreground">Tasks</p>
               </div>
             </Card>
